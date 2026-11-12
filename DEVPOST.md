@@ -49,7 +49,7 @@ The honest conclusion is that this belongs inside PayPal: a third-party app cann
 
 ## What the demo proves today, and what needs PayPal
 
-- Proven today: hold as an uncaptured authorization, capture after family approval, void on Stop or on no answer, on the PayPal sandbox (V1, V2, V11); idempotent money calls (V2, V12); Claude investigating with tools and asking one question, recorded from the real model (V6).
+- Proven today: hold as an uncaptured authorization, capture after family approval, void on Stop, on the PayPal sandbox (V1, V2, V11); the automatic void when nobody answers runs in local mode and has no sandbox record; idempotent money calls (V2, V12); Claude investigating with tools and asking one question, recorded from the real model (V6).
 - Also proven on the sandbox: another merchant's app is refused (`401 PERMISSION_DENIED` on read and capture, V14); the Agent Toolkit `get_order` reads real sandbox orders (T1); the full scenario 1 in sandbox demo mode, with the payer approving in the PayPal window, the recorded Claude run made on a sandbox order, and Stop voiding authorization 5T8904334N5048042 (S1).
 - Needs PayPal or partners: the check on any PayPal checkout, a Trusted Contact setting with consent, seller handling of `PENDING_REVIEW` captures, sandbox webhooks (V4).
 

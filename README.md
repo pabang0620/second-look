@@ -57,7 +57,7 @@ Scenario 4 took the same first three turns as scenario 2 and then recorded `amou
 ## What the AI does and does not do
 
 - **What you see in local mode is a recording of the real model.** Claude Sonnet (`claude-sonnet-5-5`, through a local Claude Code login, no API key) was run once on scenarios 1, 2, 4 and 5 on 2026-11-12, and scenario 1 once more after each answer button and after "No answer" (`npm run record:runs`). The tool calls in order, their results and the timings are in `server/agent/recorded-runs/`. In local mode the app replays a recorded turn only while every earlier tool result is the same as in the recording; anything else (another answer, a typed request, a second payment to the same seller) continues with the scripted stand-in. Every card says which: "Investigation: Recorded run: Claude Sonnet, 2026-11-12", or "Scripted stand-in", or both with the point where it changed.
-- Live model: `LLM_BACKEND=account` (your Claude Code login) or `ANTHROPIC_API_KEY` (hosted API; not yet run against the real API, VERIFY.md V6). The PayPal Agent Toolkit `get_order` is used only for sellers with sandbox credentials; the local stand-in answers `get_order` otherwise.
+- Live model: `LLM_BACKEND=account` (your Claude Code login) or `ANTHROPIC_API_KEY` (hosted API; not yet run against the real API, VERIFY.md V6). The PayPal Agent Toolkit `get_order` is used only for sellers with sandbox credentials (it read real sandbox orders, VERIFY T1); the local stand-in answers `get_order` otherwise.
 - Claude **investigates and explains** with ten tools. There is no capture, void or release tool.
 - Investigation tools are capped (6 before the question, 2 after the answer). Recording tools (`record_finding`, `raise_risk`) have their own caps, so a risky payment still reaches its question. There is also a hard cap of 16 calls per segment, and after 13 calls (from the 14th call on) only `ask_elder` or `write_report` is allowed.
 - The payer's answer is shown to the family but never lowers the risk (scammers coach victims).
@@ -67,7 +67,7 @@ Scenario 4 took the same first three turns as scenario 2 and then recorded `amou
 
 ## PayPal APIs used
 
-Orders v2 (create with intent `AUTHORIZE`, get, authorize) and Payments v2 (capture, void, get authorization) through the APIMatic SDK, Webhooks (`CHECKOUT.ORDER.APPROVED`, `PAYMENT.AUTHORIZATION.CREATED`, `PAYMENT.AUTHORIZATION.VOIDED`, `PAYMENT.CAPTURE.COMPLETED`, `PAYMENT.CAPTURE.DENIED`, `PAYMENT.CAPTURE.REFUNDED`), `verify-webhook-signature`, and the PayPal Agent Toolkit `get_order` for the investigation (sellers with sandbox keys; not yet recorded in a sandbox run). Every money call carries a fixed `PayPal-Request-Id` of the form `paymentId:action`, so a retry can never capture or void twice. A lost answer after a 5xx is reconciled by reading the order.
+Orders v2 (create with intent `AUTHORIZE`, get, authorize) and Payments v2 (capture, void, get authorization) through the APIMatic SDK, Webhooks (`CHECKOUT.ORDER.APPROVED`, `PAYMENT.AUTHORIZATION.CREATED`, `PAYMENT.AUTHORIZATION.VOIDED`, `PAYMENT.CAPTURE.COMPLETED`, `PAYMENT.CAPTURE.DENIED`, `PAYMENT.CAPTURE.REFUNDED`), `verify-webhook-signature`, and the PayPal Agent Toolkit `get_order` for the investigation (sellers with sandbox keys; read real sandbox orders, VERIFY T1). Every money call carries a fixed `PayPal-Request-Id` of the form `paymentId:action`, so a retry can never capture or void twice. A lost answer after a 5xx is reconciled by reading the order.
 
 ## Run it
 
@@ -78,7 +78,16 @@ npm run build
 npm start                 # http://localhost:3001
 ```
 
-Development: `npm run dev:server` and `npm run dev:client` (Vite on 5173 proxies to 3001). Tests: `npm test` (runs with `FORCE_MOCK=1`, so it never reaches PayPal or a model). Video: script in `docs/VIDEO_SCRIPT.md`, recording state `npm run demo:video` (builds, then starts in local mode with recorded runs, 75 s auto void, 10 s undo; PayPal and model keys in `.env` are ignored). Sandbox demo mode (for a deployed server with sandbox keys): put the seller keys in `.env` and run `npm run build && npm run start:sandbox`. Payments to sellers with keys go to the PayPal sandbox (the payer logs in with a sandbox buyer account in the PayPal window), the model is the recorded Claude runs only (no API key or account login is read), and the header says which sellers are live, for example "PayPal: sandbox for 1 of 5 sellers"; the PayPal panel then shows the real order and authorization ids. `SANDBOX_SELLERS=mobility_direct` limits the sandbox to scenario 1's seller. Scenario 1 has its own recording made on a sandbox order (`recorded-runs/scenario-1-sandbox.json`, `npm run record:sandbox`), replayed for the answer "An ad or post"; other answers continue with the scripted stand-in and the card says so. Real model through your Claude Code login, no API key: `LLM_BACKEND=account npm start`, `npm run v6:account` for the scripted check (VERIFY V6), and `npm run record:runs` to record the runs again.
+Development: `npm run dev:server` and `npm run dev:client` (Vite on 5173 proxies to 3001). Tests: `npm test` (runs with `FORCE_MOCK=1`, so it never reaches PayPal or a model). Video script: `docs/VIDEO_SCRIPT.md`.
+
+| Mode | Command | PayPal | Model |
+|---|---|---|---|
+| Local (default) | `npm start` | Local stand-in with real response shapes; no outside calls | Recorded Claude Sonnet runs, then the scripted stand-in |
+| Video recording | `npm run demo:video` | Local stand-in (keys in `.env` ignored); 75 s auto void, 10 s undo | Recorded runs |
+| Sandbox demo | `npm run build && npm run start:sandbox` | PayPal sandbox for sellers that have keys in `.env` (payer approves in the PayPal window); the others stay on the stand-in. `SANDBOX_SELLERS=mobility_direct` limits it to scenario 1's seller | Recorded runs only (no API key or login is read) |
+| Live model | `LLM_BACKEND=account npm start` | Local stand-in, or sandbox sellers if keys are set | Real Claude Sonnet through your Claude Code login, no API key |
+
+In sandbox demo mode the header says which sellers are live, for example "PayPal: sandbox for 1 of 5 sellers", and the PayPal panel shows the real order and authorization ids. Scenario 1 has its own recording made on a sandbox order (`recorded-runs/scenario-1-sandbox.json`, `npm run record:sandbox`), replayed for the answer "An ad or post"; other answers continue with the scripted stand-in and the card says so. Other commands: `npm run v6:account` (scripted live-model check, VERIFY V6) and `npm run record:runs` (record the runs again).
 
 **Local mode** needs no accounts and makes no outside calls. A stand-in PayPal with the same response shapes (and the same ownership rule: an app can only touch its own authorizations) delivers signed webhooks to the app's own webhook endpoint, and the investigation replays the recorded Claude runs (see above). Judge mode shows a "local mode" label whenever it is in use.
 
