@@ -24,22 +24,25 @@ const errorResult = (use, message) => ({ type: 'tool_result', tool_use_id: use.i
 
 // One investigation segment. Segment 1 ends at ask_elder, write_report, a time limit or the hard call cap.
 // Segment 2 starts after the answer. The model is never running while we wait for a person.
-export async function runSegment({ llm, system, tools, messages, segment, used, deadline, now, execute, pendingResults = [] }) {
+export async function runSegment({ llm, system, tools, messages, segment, used, deadline, now, execute, pendingResults = [], replayKey }) {
   const budget = createBudget({ segment, used })
   const results = [...pendingResults]
+  const sources = new Set() // which model answered each turn, for the label the family sees
+  const end = (fields) => ({ ...fields, budget: budget.snapshot(), sources: [...sources] })
   for (;;) {
-    if (now() >= deadline) return { outcome: 'timeout', budget: budget.snapshot() }
-    if (budget.snapshot().total >= LIMITS.hardCap) return { outcome: 'hard_cap', budget: budget.snapshot() }
+    if (now() >= deadline) return end({ outcome: 'timeout' })
+    if (budget.snapshot().total >= LIMITS.hardCap) return end({ outcome: 'hard_cap' })
     let response
     try {
-      response = await callModel(llm, { system, tools, messages, deadline, now })
+      response = await callModel(llm, { system, tools, messages, deadline, now, replayKey })
     } catch (err) {
-      if (isDeadlineError(err, { deadline, now })) return { outcome: 'timeout', budget: budget.snapshot() }
-      return { outcome: 'llm_error', error: String(err.message || err), budget: budget.snapshot() }
+      if (isDeadlineError(err, { deadline, now })) return end({ outcome: 'timeout' })
+      return end({ outcome: 'llm_error', error: String(err.message || err) })
     }
+    sources.add(response.source || llm.label || 'Claude')
     messages.push({ role: 'assistant', content: response.content })
     const uses = response.content.filter((b) => b.type === 'tool_use')
-    if (uses.length === 0) return { outcome: 'no_report', budget: budget.snapshot() }
+    if (uses.length === 0) return end({ outcome: 'no_report' })
 
     let asked = null
     let reported = false
@@ -57,8 +60,8 @@ export async function runSegment({ llm, system, tools, messages, segment, used, 
         ? { type: 'tool_result', tool_use_id: use.id, content: JSON.stringify(out.result).slice(0, 8000) }
         : errorResult(use, out.error))
     }
-    if (asked) return { outcome: 'asked', askUseId: asked.id, pendingResults: results, budget: budget.snapshot() }
-    if (reported) return { outcome: 'reported', budget: budget.snapshot() }
+    if (asked) return end({ outcome: 'asked', askUseId: asked.id, pendingResults: results })
+    if (reported) return end({ outcome: 'reported' })
     messages.push({ role: 'user', content: results.splice(0, results.length) })
   }
 }

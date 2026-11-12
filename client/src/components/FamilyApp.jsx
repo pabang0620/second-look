@@ -24,6 +24,7 @@ export default function FamilyApp({ family, refresh, judgeMode = false }) {
         <article key={r.id} className="card alert">
           <h3>Mom was asked for {r.amount || 'money'} outside PayPal</h3>
           <p>Claude noticed: {[...new Set(r.findings.map((f) => f.kind.replace(/_/g, ' ')))].join(', ') || 'nothing specific'}.</p>
+          {r.modelLabel && <p className="small model-source">Investigation: {r.modelLabel}</p>}
           <a className="btn secondary" href={`tel:${household.elderPhone.replace(/[^\d+]/g, '')}`}>Call Mom {household.elderPhone}</a>
         </article>
       ))}

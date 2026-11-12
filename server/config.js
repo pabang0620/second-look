@@ -37,12 +37,17 @@ export function loadConfig(env = process.env) {
   const port = num(env.PORT, 3001)
   const publicUrl = (env.PUBLIC_URL || `http://localhost:${port}`).replace(/\/$/, '')
   const forceMock = env.FORCE_MOCK === '1'
+  // LOCAL_ONLY=1 (video recording): no PayPal keys, no API key, no account model; recorded runs still replay.
+  const localOnly = env.LOCAL_ONLY === '1'
+  const noOutside = forceMock || localOnly
   return {
     port,
     publicUrl,
     forceMock,
-    anthropicKey: forceMock ? '' : env.ANTHROPIC_API_KEY || '',
-    llmBackend: forceMock ? 'mock' : env.LLM_BACKEND === 'account' ? 'account' : 'api',
+    localOnly,
+    paypalLocal: noOutside,
+    anthropicKey: noOutside ? '' : env.ANTHROPIC_API_KEY || '',
+    llmBackend: forceMock ? 'mock' : localOnly ? 'local' : env.LLM_BACKEND === 'account' ? 'account' : env.LLM_BACKEND === 'scripted' ? 'scripted' : 'api',
     anthropicModel: env.ANTHROPIC_MODEL || 'claude-sonnet-5-5',
     timers: buildTimers(env),
     paypalApiBase: env.PAYPAL_API_BASE || 'https://api-m.sandbox.paypal.com',

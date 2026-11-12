@@ -1,0 +1,77 @@
+{
+  "key": "payment|maple_lane|6500|seedlings||0",
+  "scenario": 2,
+  "title": "New real shop",
+  "model": "claude-sonnet-5-5",
+  "modelName": "Claude Sonnet",
+  "backend": "account (local Claude Code login, no API key)",
+  "recordedAt": "2026-11-12",
+  "segment1": [
+    {
+      "ms": 6703,
+      "calls": [
+        {
+          "name": "get_payment_request",
+          "input": {},
+          "result": "{\"amount_usd\":\"65.00\",\"kind\":\"payment\",\"memo\":\"seedlings\",\"message\":null,\"payee_display_name\":\"Maple Lane Nursery\",\"second_request\":false}"
+        }
+      ]
+    },
+    {
+      "ms": 4814,
+      "calls": [
+        {
+          "name": "get_order",
+          "input": {},
+          "result": "{\"amount_matches_request\":true,\"amount_usd\":\"65.00\",\"memo\":\"seedlings\",\"memo_matches_request\":true,\"payee_email\":\"hello@maplelane-nursery.example\",\"status\":\"COMPLETED\"}"
+        }
+      ]
+    },
+    {
+      "ms": 9057,
+      "calls": [
+        {
+          "name": "get_elder_context",
+          "input": {},
+          "result": "{\"above_usual_range\":false,\"below_usual_range\":false,\"this_payment_usd\":\"65.00\",\"typical_max_usd\":\"84.00\",\"typical_min_usd\":\"20.00\",\"well_above_usual\":false}"
+        },
+        {
+          "name": "get_payee_profile",
+          "input": {},
+          "result": "{\"display_name\":\"Maple Lane Nursery\",\"earlier_captured_payments\":0,\"email\":\"hello@maplelane-nursery.example\",\"email_domain\":\"maplelane-nursery.example\",\"first_time\":true,\"on_family_allowlist\":false}"
+        },
+        {
+          "name": "check_lookalike",
+          "input": {},
+          "result": "{\"display_name\":\"Maple Lane Nursery\",\"email_domain\":\"maplelane-nursery.example\",\"impersonates\":[],\"name_matches_domain\":true}"
+        }
+      ]
+    },
+    {
+      "ms": 16865,
+      "calls": [
+        {
+          "name": "write_report",
+          "input": {
+            "risk_level": "low",
+            "family_summary": "No scam signs found. Maple Lane Nursery is a first-time seller, which is why the payment was held. The $65.00 amount and the \"seedlings\" memo match the PayPal order. The seller name matches its email domain (maplelane-nursery.example) and imitates no bank or agency. The amount is inside the usual range of $20.00 to $84.00. There was no pasted message, so no pressure, secrecy, gift card, crypto or remote access wording to check.",
+            "elder_message": "Your payment looks normal so far. A family member will take a quick look before it goes through.",
+            "call_questions": [
+              "Did you choose Maple Lane Nursery yourself, or did someone contact you or send you a link?",
+              "Is the $65.00 for seedlings you meant to order, and do you know where they will be delivered?"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "outcome": {
+    "state": "HELD",
+    "risk": "low",
+    "findings": [],
+    "asked": false,
+    "reportSource": "claude",
+    "familySummary": "No scam signs found. Maple Lane Nursery is a first-time seller, which is why the payment was held. The $65.00 amount and the \"seedlings\" memo match the PayPal order. The seller name matches its email domain (maplelane-nursery.example) and imitates no bank or agency. The amount is inside the usual range of $20.00 to $84.00. There was no pasted message, so no pressure, secrecy, gift card, crypto or remote access wording to check.",
+    "seconds": 37.5
+  }
+}

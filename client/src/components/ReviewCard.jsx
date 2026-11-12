@@ -26,10 +26,11 @@ export default function ReviewCard({ p, hint = '', phone, onApprove, onStop, onT
         {p.findings.map((f, i) => <li key={`${f.kind}-${i}`}><strong>{label(f.kind)}</strong>: "{f.quote}"</li>)}
       </ul>
       {p.question?.answer && <p className="said">Mom said: "{p.question.answer}" <span className="small">(shown to you, never used to clear the payment)</span></p>}
-      {p.question && !p.question.answer && !p.question.closedBy && <p className="small">Asked Mom one question. Waiting for her answer.</p>}
+      {p.question && !p.question.answer && !p.question.closedBy && <p className="small">Asked Mom one question. Waiting for her answer{p.askSecondsLeft !== null ? ` (Claude finishes without it in ${clock(p.askSecondsLeft)})` : ''}.</p>}
       {p.investigation === 'running' && <p className="small">Claude is still checking...</p>}
       {p.checkedBy === 'rules' && <p className="badge risk-mid">Checked by safety rules only</p>}
       {p.report && <p className="summary">{p.report.summary}</p>}
+      {p.modelLabel && <p className="small model-source">Investigation: {p.modelLabel}</p>}
       {p.report?.callQuestions?.length > 0 && <p className="small">Ask on the phone: {p.report.callQuestions.join(' / ')}</p>}
       {hint && <p className="small hint">{hint}</p>}
       {error && <p className="banner" role="alert">{error}</p>}

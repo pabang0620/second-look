@@ -6,18 +6,18 @@ Entry for the PayPal AI Hackathon 2026, aimed at Most Impactful and Best Use of 
 
 ## Why it matters
 
-- **Big losses, concentrated in few reports.** The FBI IC3 2025 report counts about $7.7 billion lost by people 60 and older, up 59% (https://www.ic3.gov/AnnualReport/Reports/2025_IC3Report.pdf).
-- **Few large payments carry most of the harm.** In the FTC's older-adult data, reports of losses over $10,000 are about 6% of reports and about 70% of dollars lost (https://www.ftc.gov/system/files/ftc_gov/pdf/2026-older-adults-report-10192026.pdf). The design stops one large first-time payment at a time, which is the part that matters most.
-- **Online shopping is where it starts.** Among older adults' losses that began on social media, online shopping scams were the most reported (https://consumer.ftc.gov/consumer-alerts/2025/11/agent-told-me-stay-internet-it-scam). A held authorization is the one moment where a family can still say no.
+- **Big and growing losses.** People 60 and older reported $7.748 billion in losses to the FBI's Internet Crime Complaint Center in 2025, up 59% from 2024, across 201,266 complaints (FBI IC3 2025 Internet Crime Report, elder fraud section: https://www.ic3.gov/AnnualReport/Reports/2025_IC3Report.pdf).
+- **Online shopping is the most common loss.** The number of loss reports filed by older adults on online shopping fraud exceeded every other fraud type in 2025, and debit cards and payment apps were frequently reported as the payment method on those scams. When social media was the first contact, online shopping scams were the most reported loss (34%) (FTC, Protecting Older Consumers 2025-2026: https://www.ftc.gov/system/files/ftc_gov/pdf/2026-older-adults-report-10192026.pdf). This is the payment Second Look holds.
+- **The largest losses are elsewhere, and we say so.** In the same FTC report, older adults who reported losing over $100,000 were 6% of loss reports but 70% of reported dollars. Second Look holds one large first-time payment at a time; the largest losses mostly move by bank transfer and crypto, which it cannot hold (see below), so its value grows once the same check sits inside PayPal.
 
 ## Read this first: what this prototype is and is not
 
 - **Coverage:** payments made in Second Look. Built into PayPal, the same check would cover any PayPal checkout.
-- **1st-party credentials, by design.** The design gives each seller its own sandbox business account and REST app; the code keeps one client per seller, and the prototype holds those credentials to play the role PayPal would play internally. The sandbox run so far used one app for all sellers (VERIFY V3 is still open). A third-party app cannot capture another merchant's authorization (PayPal documents a `PERMISSION_NOT_GRANTED` error for this; showing it live is VERIFY V14, not yet run), so the honest conclusion is that this feature has to live inside PayPal.
-- **What we propose to PayPal (a proposal, not an existing feature):** PayPal's capture API already defines a `PENDING` status with a `PENDING_REVIEW` reason ("The captured payment is pending manual review"). We suggest reusing that state for family confirmation, with the family decision moving it to `COMPLETED` or `DENIED`. How many seller integrations handle this state today is not known to us.
+- **First-party credentials, by design.** The design gives each seller its own sandbox business account and REST app; the code keeps one client per seller, and the prototype holds those credentials to play the role PayPal would play internally. The sandbox run so far used one app for all sellers (VERIFY V3 is still open). A third-party app cannot capture another merchant's authorization (PayPal documents a `PERMISSION_NOT_GRANTED` error for this, https://developer.paypal.com/api/payments/v2/errors/permission_not_granted; showing it live is VERIFY V14, not yet run), so the honest conclusion is that this feature has to live inside PayPal.
+- **What we propose to PayPal (a proposal, not an existing feature):** PayPal's capture API already defines a `PENDING` status with a `PENDING_REVIEW` reason ("The captured payment is pending manual review", https://developer.paypal.com/api/orders/v2/definitions/capture_status_details). We suggest reusing that state for family confirmation, with the family decision moving it to `COMPLETED` or `DENIED`. How many seller integrations handle this state today is not known to us.
 - **Seller impact, stated plainly:** only a new seller combined with a risk signal is held, for at most 70 hours. The seller sees an unconfirmed payment during that time. If the family stops it, the seller sees a declined payment, which is what PayPal already does for payments it detects as highly risky.
-- **What it cannot stop:** FBI IC3 reports that 56 percent of 60+ losses involved cryptocurrency, and the FTC reports bank transfers and crypto as the top loss channels. Second Look cannot hold those. It targets online shopping scams paid through a payment app, and for requests outside PayPal (gift cards, coin ATMs, transfers) it only checks the text and tells the family ("Check a request").
-- **Prior work:** bank-side prototypes such as Aval (MHacks 2026) move risky money into a hold account. Second Look keeps it as an uncaptured PayPal authorization and adds an AI investigation the family can read.
+- **What it cannot stop:** in the FBI IC3 2025 report, $4.35 billion of the $7.75 billion lost by people 60 and older carried a cryptocurrency link (about 56%), and the FTC reports bank transfers and cryptocurrency as the payment methods with the highest reported losses. Second Look cannot hold those. It targets online shopping scams paid through a payment app, and for requests outside PayPal (gift cards, coin ATMs, transfers) it only checks the text and tells the family ("Check a request").
+- **Prior work:** bank-side prototypes such as Aval (an MHacks project, https://devpost.com/software/aval) move risky money into a hold account. Second Look keeps it as an uncaptured PayPal authorization and adds an AI investigation the family can read.
 
 ## Who it is for
 
@@ -43,20 +43,21 @@ A person 60 or older who already pays with PayPal online, and one family member 
 | 4 | Nobody answers | new | nobody presses anything, the hold voids itself |
 | 5 | Gift card request | none (no money) | text is checked and the family is alerted |
 
-Same agent, different path:
+Same agent, different path. This is what Claude Sonnet actually did in the recorded runs (2026-11-12); each row is one model turn, and calls in one turn ran together:
 
-| Step | Scenario 1 (scam, $640 scooter) | Scenario 2 (real new shop, $65 seedlings) |
+| Turn | Scenario 1 (scam, $640 scooter) | Scenario 2 (real new shop, $65 seedlings) |
 |---|---|---|
 | 1 | `get_payment_request`: new seller, pasted message | `get_payment_request`: new seller, no message |
-| 2 | `get_order`: amount matches | `get_order`: amount matches |
-| 3 | `check_lookalike`: name and email domain do not match | `check_lookalike`: consistent, so the message search is skipped |
-| 4 | `record_finding`, then `search_scam_patterns`: pressure, secrecy | `get_elder_context`: within her usual range |
-| 5 | `record_finding` x2, `raise_risk(high)` | `write_report(low)` |
-| 6 | `ask_elder`: "How did you first hear about this seller?" | no question |
+| 2 | `get_order`, `check_lookalike`, `search_scam_patterns`, `get_payee_profile`: amount matches, name and email domain do not match, pressure and secrecy found, first payment | `get_order`: amount and memo match |
+| 3 | `record_finding` x3 (name and domain, urgency, secrecy), `raise_risk(high)`, `ask_elder`: "How did you first hear about this seller?" | `get_elder_context`, `get_payee_profile`, `check_lookalike`: usual range, first payment, name consistent |
+| 4 | after the answer: `write_report(high)` (for "An ad or post" it first records `social_media_origin`) | `write_report(low)`, no question |
+
+Scenario 4 took the same first three turns as scenario 2 and then recorded `amount_above_usual` ($120 against a usual $20 to $84) with `raise_risk(medium)`. Scenario 5 (a request, no payment) ran `get_payment_request` and `search_scam_patterns` together, recorded gift card, secrecy and urgency, and wrote a high-risk report.
 
 ## What the AI does and does not do
 
-- In local mode the investigation is a scripted stand-in that follows the same tool loop (the Judge page says "Model: scripted stand-in"). Set `ANTHROPIC_API_KEY` for live Claude; that path has not been run against the real API yet (VERIFY.md V6). The PayPal Agent Toolkit `get_order` is used only for sellers with sandbox credentials; the local stand-in answers `get_order` otherwise.
+- **What you see in local mode is a recording of the real model.** Claude Sonnet (`claude-sonnet-5-5`, through a local Claude Code login, no API key) was run once on scenarios 1, 2, 4 and 5 on 2026-11-12, and scenario 1 once more after each answer button and after "No answer" (`npm run record:runs`). The tool calls in order, their results and the timings are in `server/agent/recorded-runs/`. In local mode the app replays a recorded turn only while every earlier tool result is the same as in the recording; anything else (another answer, a typed request, a second payment to the same seller) continues with the scripted stand-in. Every card says which: "Investigation: Recorded run: Claude Sonnet, 2026-11-12", or "Scripted stand-in", or both with the point where it changed.
+- Live model: `LLM_BACKEND=account` (your Claude Code login) or `ANTHROPIC_API_KEY` (hosted API; not yet run against the real API, VERIFY.md V6). The PayPal Agent Toolkit `get_order` is used only for sellers with sandbox credentials; the local stand-in answers `get_order` otherwise.
 - Claude **investigates and explains** with ten tools. There is no capture, void or release tool.
 - Investigation tools are capped (6 before the question, 2 after the answer). Recording tools (`record_finding`, `raise_risk`) have their own caps, so a risky payment still reaches its question. There is also a hard cap of 16 calls per segment, and after 13 calls (from the 14th call on) only `ask_elder` or `write_report` is allowed.
 - The payer's answer is shown to the family but never lowers the risk (scammers coach victims).
@@ -77,19 +78,22 @@ npm run build
 npm start                 # http://localhost:3001
 ```
 
-Development: `npm run dev:server` and `npm run dev:client` (Vite on 5173 proxies to 3001). Tests: `npm test` (runs with `FORCE_MOCK=1`, so it never reaches PayPal or a model). Video timing preset: `npm run demo:video` (75 s auto void, 10 s undo). Real model through your Claude Code login, no API key: `LLM_BACKEND=account npm start`, and `npm run v6:account` for the scripted check (VERIFY V6).
+Development: `npm run dev:server` and `npm run dev:client` (Vite on 5173 proxies to 3001). Tests: `npm test` (runs with `FORCE_MOCK=1`, so it never reaches PayPal or a model). Video: script in `docs/VIDEO_SCRIPT.md`, recording state `npm run demo:video` (builds, then starts in local mode with recorded runs, 75 s auto void, 10 s undo; PayPal and model keys in `.env` are ignored). Real model through your Claude Code login, no API key: `LLM_BACKEND=account npm start`, `npm run v6:account` for the scripted check (VERIFY V6), and `npm run record:runs` to record the runs again.
 
-**Local mode** needs no accounts and makes no outside calls. A stand-in PayPal with the same response shapes (and the same ownership rule: an app can only touch its own authorizations) delivers signed webhooks to the app's own webhook endpoint, and a scripted model follows the same tool loop. Judge mode shows a "local mode" label whenever it is in use.
+**Local mode** needs no accounts and makes no outside calls. A stand-in PayPal with the same response shapes (and the same ownership rule: an app can only touch its own authorizations) delivers signed webhooks to the app's own webhook endpoint, and the investigation replays the recorded Claude runs (see above). Judge mode shows a "local mode" label whenever it is in use.
 
 ## Testing instructions for judges
 
 1. Open `/` (Judge mode). The payer (Margaret) is on the left, the family member (Sarah) on the right, PayPal's state at the bottom.
-2. Press **1 Shop scam**. In local mode press "Approve in PayPal (local mode)". With sandbox credentials a PayPal window opens: log in with the sandbox buyer account listed in the Devpost submission's testing instructions and approve. Sarah's card fills in step by step; open "How Claude checked". Answer Claude's question on Margaret's side.
+2. Press **1 Shop scam**. In local mode press "Approve in PayPal (local mode)". Local mode needs no login. Only if you add your own sandbox credentials does a PayPal window open; then log in with your own sandbox buyer account and approve. Sarah's card fills in step by step and says "Investigation: Recorded run: Claude Sonnet, 2026-11-12"; open "How Claude checked". Answer Claude's question on Margaret's side (Sarah's card shows how long Claude waits for it).
 3. On Sarah's card press **Stop**. The bottom panel goes to `VOIDED` and shows the verified webhooks.
 4. Press **2 New real shop**, approve once. No question this time. Sarah presses Approve, waits for the undo window (30 s in demo mode), and the payment is captured.
 5. Press **3 Known seller** and approve once in PayPal (local mode). There is no family step: it is captured right away and Margaret's phone shows "Paid".
-6. Press **4 Nobody answers**, approve once, and press nothing for 2 minutes. The hold voids itself.
+6. Press **4 Nobody answers**, approve once, and press nothing. The card counts down ("Voids itself in 1:59"); after 2 minutes the hold voids itself and the activity list shows "Expired, no answer".
 7. Press **5 Gift card request**. The sentence is typed into Margaret's own "Someone asked me for money without PayPal" screen and checked; Margaret sees what was noticed and Sarah gets an alert.
+8. Open **Sandbox evidence** under the PayPal panel: the checks that passed against the PayPal sandbox on 2026-11-12, with ids.
+
+The whole path takes about 3 minutes with the default `.env.example` (checked headless on 2026-11-12: every step finished, no failed request, no console error).
 
 Good to know while testing: if two payments overlap (for example 1 is waiting for Margaret's answer and you press 4), Margaret's phone keeps the payment with the open question in front and lists the other under "Your other payments"; the PayPal panel follows the payment shown on her phone. Every visitor gets a household of their own (separate tokens and state), and Reset only clears yours.
 
@@ -105,9 +109,24 @@ The same author also submitted #5 and #9. All three use `authorize` and `capture
 | Who it is for | online shoppers | groups buying together | older adults and their family, against payment scams |
 | What a void means | order cancelled | group did not fill, holds released | a suspected scam was stopped before any money moved |
 
-## Value for PayPal
+## Who uses it first
 
-A payment the family stops is never captured, so it never becomes a dispute or a refund of money that already moved. No cost figure is claimed, because none was measured.
+The first user is a person 60 or older who already pays online with PayPal, together with the one adult child who already helps with their bills and whom they choose to look at a risky first payment (in the demo: Margaret and her daughter Sarah).
+
+## Why this is good for PayPal
+
+- **Merchant volume stays.** Known sellers and payments under the limit are captured at once; only a new seller with a risk signal waits, and an approved payment is captured as usual. The checkout is not blocked, so the payment volume stays with PayPal instead of the family being left with "do not pay online" as the only safe advice.
+- **Less loss after the fact.** A payment the family stops is never captured, so it never becomes a dispute, a chargeback or a refund of money that already moved. No cost figure is claimed, because none was measured.
+- **A product PayPal could ship.** "Trusted Contact" in PayPal account settings, built on states PayPal already has: an uncaptured authorization, or a capture held as `PENDING` with reason `PENDING_REVIEW`. It extends PayPal's own AI scam alerts for Friends and Family payments (https://newsroom.paypal-corp.com/2025-7-21-Introducing-AI-Powered-Scam-Alerts-for-Friends-and-Family-Payments), which warn the sender, by adding a second person before the money moves.
+
+## What the demo proves today, and what needs PayPal
+
+| Proven today | Needs PayPal or partners |
+|---|---|
+| Hold as an uncaptured authorization, capture after family approval, void on Stop or no answer, on the PayPal sandbox (VERIFY V1, V2, V11) | Running the check for any PayPal checkout, not only payments made in Second Look |
+| Idempotent money calls with a fixed `PayPal-Request-Id` (V2, V12 create replay) | A Trusted Contact setting in the PayPal account and consent flow |
+| Claude investigating with tools and asking one question, recorded from the real model (V6, `server/agent/recorded-runs/`) | Seller-side handling of `PENDING_REVIEW` captures at scale (unknown today) |
+| Signed webhooks moving state forward only, against the local stand-in | Sandbox webhook delivery (V4) and the refusal for another app (V14), which need a public URL and two sandbox apps |
 
 ## Roadmap
 
@@ -123,18 +142,23 @@ This repository is not meant to become a product by itself: it holds seller cred
 | Name | Meaning | Default |
 |---|---|---|
 | `PORT`, `PUBLIC_URL` | server port and the public URL used for PayPal return links and webhooks | 3001, `http://localhost:3001` |
-| `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` | live Claude; empty means the scripted stand-in | empty, `claude-sonnet-5-5` |
+| `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` | live Claude through the hosted API; empty means recorded runs plus the scripted stand-in | empty, `claude-sonnet-5-5` |
 | `DEMO_TIMERS` | 1 = short waits (2 min void, 30 s undo, 3 min question), 0 = real (70 h, 15 min, 2 h) | 1 |
 | `AUTO_VOID_MS`, `UNDO_MS`, `ASK_TIMEOUT_MS` | demo timer overrides | see above |
 | `PAYEE_<SELLER>_CLIENT_ID`, `_CLIENT_SECRET`, `_WEBHOOK_ID` | one sandbox app per seller (`POWER_COMPANY`, `GARDEN_SHOP`, `MOBILITY_DIRECT`, `MAPLE_LANE`, `LAKESIDE_TICKETS`) | empty, local stand-in |
 | `PAYPAL_API_BASE` | PayPal host; must be `https://api-m.sandbox.paypal.com` when any seller has keys, otherwise startup stops | `https://api-m.sandbox.paypal.com` |
 | `PAYPAL_TRANSPORT` | `sdk` (APIMatic SDK) or `rest` (earlier REST adapter) for Orders and Payments calls | `sdk` |
-| `FORCE_MOCK` | 1 = ignore the Anthropic key, `LLM_BACKEND` and every seller's PayPal keys, run fully local (`npm test` sets it) | unset |
-| `LLM_BACKEND` | `account` = run Claude through your local Claude Code login (shown as "Claude Sonnet (local account)"); no API key is read or sent. Local development only | unset |
+| `FORCE_MOCK` | 1 = ignore the Anthropic key, `LLM_BACKEND` and every seller's PayPal keys, and use only the scripted stand-in (`npm test` sets it) | unset |
+| `LLM_BACKEND` | `account` = run Claude through your local Claude Code login (shown as "Claude Sonnet (local account)"); no API key is read or sent. Local development only. `scripted` = the scripted stand-in only, no recordings | unset |
+| `LOCAL_ONLY` | 1 = ignore PayPal keys, the API key and `LLM_BACKEND`, but keep replaying recorded runs (`npm run demo:video` sets it) | unset |
 
 ## What is not in this version
 
 Real text messages or push (alerts are on screen), voice call analysis (the Call button is a `tel:` link), several family contacts, re-authorization after the 3 day honor period (the hold voids itself first), disputes, persistence (state is in memory and resets on restart). Roles are demo tokens that show the separation of the payer and family views; they are not real authentication.
+
+## Sandbox evidence (VERIFY.md, 2026-11-12)
+
+Passed against the PayPal sandbox or, for V6, the real model: **V1** create and authorize, **V2** capture, void and Request-Id replay, **V5** contract sheet matched except the empty authorize body, **V6** Claude Sonnet through a local Claude Code account, **V10** SDK smoke, **V11** create, authorize, capture and void through the SDK, **V12** create_order replay (the lost-answer half was not run), **V13** SDK models carry the ids. Not run: V3, V4, V7, V8, V9, V14. The same list is in the app under the PayPal panel.
 
 ## Built with the APIMatic Context Plugin
 
@@ -151,11 +175,13 @@ One `PaypalClient` per seller app is built at startup, and startup stops if the 
 
 ## Sources used for the problem statement
 
-- FBI IC3 2025 Internet Crime Report, elder fraud section: https://www.ic3.gov/AnnualReport/Reports/2025_IC3Report.pdf
-- FTC consumer alert of 2025-11-20: https://consumer.ftc.gov/consumer-alerts/2025/11/agent-told-me-stay-internet-it-scam
+- FBI IC3 2025 Internet Crime Report, elder fraud section ($7.748 billion, 59%, 201,266 complaints; cryptocurrency $4,347,081,557 in the 60+ loss table): https://www.ic3.gov/AnnualReport/Reports/2025_IC3Report.pdf
+- FTC consumer alert of 2025-11-20 ("Stop and talk to someone you trust", "They try to isolate you by saying you can't tell anyone"): https://consumer.ftc.gov/consumer-alerts/2025/11/agent-told-me-stay-internet-it-scam
 - FTC, Avoiding and Reporting Gift Card Scams: https://consumer.ftc.gov/articles/avoiding-and-reporting-gift-card-scams
-- FTC, Protecting Older Consumers 2025-2026: https://www.ftc.gov/system/files/ftc_gov/pdf/2026-older-adults-report-10192026.pdf
-- PayPal newsroom post on AI scam alerts (2025-07-21) and PayPal developer documentation for errors and capture status details
+- FTC, Protecting Older Consumers 2025-2026 (losses over $100,000: 6% of reports, 70% of losses; online shopping the most reported loss type; social media contact 34% online shopping; bank transfers and cryptocurrency the highest losses): https://www.ftc.gov/system/files/ftc_gov/pdf/2026-older-adults-report-10192026.pdf
+- PayPal newsroom, AI-powered scam alerts for Friends and Family payments (2025-07-21): https://newsroom.paypal-corp.com/2025-7-21-Introducing-AI-Powered-Scam-Alerts-for-Friends-and-Family-Payments
+- PayPal developer documentation: https://developer.paypal.com/api/payments/v2/errors/permission_not_granted and https://developer.paypal.com/api/orders/v2/definitions/capture_status_details
+- Aval on Devpost: https://devpost.com/software/aval
 - FINRA rules 2165 and 4512 (roadmap): https://www.finra.org/rules-guidance/rulebooks/finra-rules/2165 and https://www.finra.org/rules-guidance/rulebooks/finra-rules/4512
 
 The product claims above are limited to what those sources say.

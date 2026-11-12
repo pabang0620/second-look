@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { z } from 'zod'
 import { HttpError, parse } from '../http.js'
 import { SCENARIOS } from '../scenarios.js'
+import { SANDBOX_EVIDENCE } from '../sandboxEvidence.js'
 import { elderState, familyState, paypalPanel } from './state.js'
 import { elderView } from '../views.js'
 
@@ -34,6 +35,7 @@ export function judgeRoutes(pool) {
         realTimers: { autoVoidHours: 70, undoMinutes: 15 },
         modes: { llm: svc.llm.mode, llmLabel: svc.llm.label || (svc.llm.mode === 'live' ? 'Claude (API)' : 'scripted stand-in'), paypal: svc.registry.list().map((p) => ({ key: p.key, mode: p.credentials.mode })) },
         coverage: COVERAGE,
+        evidence: SANDBOX_EVIDENCE,
       },
     })
   })

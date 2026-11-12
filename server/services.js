@@ -6,8 +6,7 @@ import { createPayeeRegistry } from './paypal/payees.js'
 import { createGateway } from './paypal/gateway.js'
 import { createMockPayPal } from './paypal/mock.js'
 import { createInvestigator } from './agent/investigator.js'
-import { createMockLlm } from './agent/mockLlm.js'
-import { selectLlm } from './agent/selectLlm.js'
+import { selectLlm, localLlm } from './agent/selectLlm.js'
 import { signalsFor } from './rules.js'
 import { createLifecycle } from './payments/lifecycle.js'
 import { createDecisions } from './payments/decisions.js'
@@ -20,10 +19,10 @@ export function createServices(overrides = {}) {
   const clock = overrides.clock || systemClock
   const timers = overrides.timers || config.timers
   const store = createStore()
-  const registry = overrides.registry || createPayeeRegistry(config.env, undefined, { forceMock: config.forceMock })
+  const registry = overrides.registry || createPayeeRegistry(config.env, undefined, { forceMock: config.paypalLocal })
   const mock = overrides.mock || createMockPayPal({ now: clock.now, publicUrl: config.publicUrl })
   const gateway = overrides.gateway || createGateway({ registry, apiBase: config.paypalApiBase, transport: config.paypalTransport, fetchImpl: overrides.fetchImpl, now: clock.now, publicUrl: config.publicUrl, mock })
-  const llm = overrides.llm || selectLlm(config) || createMockLlm()
+  const llm = overrides.llm || selectLlm(config) || localLlm(config)
   const withLock = createLocks()
 
   const signalsOf = (payment) => signalsFor({ payment, payee: registry.get(payment.payeeKey), household: store.household() })

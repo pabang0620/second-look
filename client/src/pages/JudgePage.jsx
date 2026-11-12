@@ -73,7 +73,21 @@ export default function JudgePage() {
         </section>
       </div>
       <PayPalPanel panel={state?.panel} coverage={panelNote(state?.panel)} />
+      {boot?.evidence && <SandboxEvidence evidence={boot.evidence} />}
       <p className="small"><a href="/elder">Open the payer page alone</a> / <a href="/family">Open the family page alone</a></p>
     </div>
+  )
+}
+
+// What the PayPal sandbox run showed (VERIFY.md). Open items are named as open, never as passed.
+function SandboxEvidence({ evidence }) {
+  return (
+    <details className="card evidence">
+      <summary>Sandbox evidence ({evidence.date}, VERIFY.md): {evidence.passed.length} checks passed</summary>
+      <ul>
+        {evidence.passed.map((e) => <li key={e.id}><strong>{e.id}</strong> PASS: {e.text}</li>)}
+      </ul>
+      <p className="small">Not run yet: {evidence.open.join(', ')}.</p>
+    </details>
   )
 }

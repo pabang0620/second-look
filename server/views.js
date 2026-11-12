@@ -17,6 +17,17 @@ export function moneyStatus(p) {
   }
 }
 
+// Which model did the investigation, per segment, so a recording or the scripted stand-in is never shown as live Claude.
+export function modelLabel(sources) {
+  const first = sources?.[1] || []
+  const second = sources?.[2] || []
+  if (first.length === 0 && second.length === 0) return null
+  const head = first.join(', then ')
+  const same = second.every((s) => first.includes(s))
+  if (second.length === 0 || same) return head
+  return `${head}; after Mom's answer: ${second.join(', then ')}`
+}
+
 const secondsUntil = (target, now) => (target ? Math.max(0, Math.ceil((target - now) / 1000)) : null)
 
 function base(p, registry, now) {
@@ -41,8 +52,10 @@ export function familyView(p, { registry, now, household }) {
     signals: p.signals, findings: p.findings, steps: checks,
     checks: checks.length, findingsCount: p.findings.length, questionsAsked: p.question ? 1 : 0,
     question: p.question ? { text: p.question.text, answer: p.question.answer, closedBy: p.question.closedBy } : null,
+    askSecondsLeft: p.state === STATES.HELD_ASKING ? secondsUntil(p.askExpiresAt, now) : null,
     report: p.report ? { summary: p.report.familySummary, callQuestions: p.report.callQuestions, source: p.report.source } : null,
     checkedBy: p.investigation.status === 'rules_only' ? 'rules' : 'claude',
+    modelLabel: modelLabel(p.modelSources),
     investigation: p.investigation.status,
     canDecide: HELD_STATES.includes(p.state),
     canUndo: p.state === STATES.APPROVED_PENDING,
@@ -103,7 +116,7 @@ export function activityList(store, registry) {
 export function requestView(r) {
   return {
     id: r.id, text: r.text, amount: r.amountCents ? formatUsd(r.amountCents) : null, risk: r.risk, createdAt: r.createdAt,
-    steps: r.steps.filter((s) => s.kind === 'check'), findings: r.findings,
+    steps: r.steps.filter((s) => s.kind === 'check'), findings: r.findings, modelLabel: modelLabel(r.modelSources),
     report: r.report ? { summary: r.report.familySummary, elderMessage: r.report.elderMessage, callQuestions: r.report.callQuestions } : null,
   }
 }

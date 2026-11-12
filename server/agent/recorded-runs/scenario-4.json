@@ -1,0 +1,94 @@
+{
+  "key": "payment|lakeside_tickets|12000|concert tickets||0",
+  "scenario": 4,
+  "title": "Nobody answers",
+  "model": "claude-sonnet-5-5",
+  "modelName": "Claude Sonnet",
+  "backend": "account (local Claude Code login, no API key)",
+  "recordedAt": "2026-11-12",
+  "segment1": [
+    {
+      "ms": 4544,
+      "calls": [
+        {
+          "name": "get_payment_request",
+          "input": {},
+          "result": "{\"amount_usd\":\"120.00\",\"kind\":\"payment\",\"memo\":\"concert tickets\",\"message\":null,\"payee_display_name\":\"Lakeside Tickets\",\"second_request\":false}"
+        }
+      ]
+    },
+    {
+      "ms": 6460,
+      "calls": [
+        {
+          "name": "get_order",
+          "input": {},
+          "result": "{\"amount_matches_request\":true,\"amount_usd\":\"120.00\",\"memo\":\"concert tickets\",\"memo_matches_request\":true,\"payee_email\":\"box@lakeside-tickets.example\",\"status\":\"COMPLETED\"}"
+        }
+      ]
+    },
+    {
+      "ms": 8662,
+      "calls": [
+        {
+          "name": "get_elder_context",
+          "input": {},
+          "result": "{\"above_usual_range\":true,\"below_usual_range\":false,\"this_payment_usd\":\"120.00\",\"typical_max_usd\":\"84.00\",\"typical_min_usd\":\"20.00\",\"well_above_usual\":false}"
+        },
+        {
+          "name": "get_payee_profile",
+          "input": {},
+          "result": "{\"display_name\":\"Lakeside Tickets\",\"earlier_captured_payments\":0,\"email\":\"box@lakeside-tickets.example\",\"email_domain\":\"lakeside-tickets.example\",\"first_time\":true,\"on_family_allowlist\":false}"
+        },
+        {
+          "name": "check_lookalike",
+          "input": {},
+          "result": "{\"display_name\":\"Lakeside Tickets\",\"email_domain\":\"lakeside-tickets.example\",\"impersonates\":[],\"name_matches_domain\":true}"
+        }
+      ]
+    },
+    {
+      "ms": 11175,
+      "calls": [
+        {
+          "name": "record_finding",
+          "input": {
+            "kind": "amount_above_usual",
+            "quote": "typical_max_usd 84.00, this_payment_usd 120.00, above_usual_range true",
+            "source_tool": "get_elder_context"
+          }
+        },
+        {
+          "name": "raise_risk",
+          "input": {
+            "level": "medium",
+            "reason": "First-time seller and amount ($120) above usual range ($20-$84). No scam wording, name matches domain, order matches request."
+          }
+        },
+        {
+          "name": "write_report",
+          "input": {
+            "risk_level": "medium",
+            "family_summary": "A $120.00 payment to Lakeside Tickets for \"concert tickets\" is held. The order matches the request (amount, memo, seller email box@lakeside-tickets.example), and the seller name matches its email domain with no brand imitation. No message came with it, so no pressure or secrecy was found. Two cautions: this is the first payment to this seller, and $120 is above the usual range of $20 to $84. Please confirm the purchase is wanted before releasing.",
+            "elder_message": "Your payment is on hold while a family member takes a quick look. This is a routine check, and nothing is wrong so far.",
+            "call_questions": [
+              "Did you choose this concert and this ticket seller yourself? How did you find Lakeside Tickets?",
+              "Which concert and date are the tickets for, and how will the tickets be delivered to you?"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "outcome": {
+    "state": "HELD",
+    "risk": "medium",
+    "findings": [
+      "amount_above_usual"
+    ],
+    "asked": false,
+    "reportSource": "claude",
+    "familySummary": "A $120.00 payment to Lakeside Tickets for \"concert tickets\" is held. The order matches the request (amount, memo, seller email box@lakeside-tickets.example), and the seller name matches its email domain with no brand imitation. No message came with it, so no pressure or secrecy was found. Two cautions: this is the first payment to this seller, and $120 is above the usual range of $20 to $84. Please confirm the purchase is wanted before releasing.",
+    "seconds": 30.8
+  }
+}

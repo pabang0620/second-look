@@ -14,8 +14,9 @@
     "dev:client": "vite",
     "test": "FORCE_MOCK=1 node --test test/*.test.js",
     "sdk:smoke": "node scripts/sdkSmoke.js",
-    "demo:video": "AUTO_VOID_MS=75000 UNDO_MS=10000 node server/index.js",
-    "v6:account": "node scripts/v6Account.js"
+    "demo:video": "npm run build && LOCAL_ONLY=1 DEMO_TIMERS=1 AUTO_VOID_MS=75000 UNDO_MS=10000 node server/index.js",
+    "v6:account": "node scripts/v6Account.js",
+    "record:runs": "node scripts/recordRuns.js"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.3.322",

@@ -72,6 +72,8 @@ a { color: var(--primary); }
 .card { background: var(--surface); border: 1px solid var(--line); border-left: 6px solid var(--primary); border-radius: var(--radius); padding: 12px 14px; }
 .card.ok { border-left-color: var(--ok); }
 .card.alert { border-left-color: var(--warn); background: var(--risk-mid-bg); }
+.card.evidence { margin-top: 12px; }
+.evidence summary { cursor: pointer; font-weight: 700; }
 .card .meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 4px 0; }
 .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; border: 1px solid currentColor; }
 .risk-low { background: var(--risk-low-bg); color: var(--ok); }

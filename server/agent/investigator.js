@@ -5,6 +5,7 @@ import { executeTool } from './tools.js'
 import { runSegment } from './loop.js'
 import { SYSTEM_PROMPT, REQUEST_PROMPT } from './prompt.js'
 import { ELDER_REASON_PHRASES } from './knowledge.js'
+import { replayKeyOf } from './replayLlm.js'
 
 const answerNote = 'Shown to the family. It does not lower the risk.'
 
@@ -83,7 +84,9 @@ export function createInvestigator({ store, registry, gateway, llm, clock, wall 
       now: wall.now,
       execute: (name, input) => executeTool(name, input, ctx),
       pendingResults,
+      replayKey: replayKeyOf(ctx.subject, ctx.payee.key),
     })
+    store.update(id, (p) => ({ modelSources: { ...(p.modelSources || {}), [segment]: outcome.sources } }))
     const used = { ...(payment.agent?.used || {}), record_finding: outcome.budget.record_finding, raise_risk: outcome.budget.raise_risk, ask_elder: outcome.budget.ask_elder, write_report: outcome.budget.write_report }
     return { outcome, used }
   }
@@ -158,7 +161,9 @@ export function createInvestigator({ store, registry, gateway, llm, clock, wall 
       const outcome = await runSegment({
         llm, system: REQUEST_PROMPT, tools: claudeTools({ requestMode: true }), messages, segment: 1, used: {},
         deadline: wall.now() + timers.segment1Ms, now: wall.now, execute: (name, input) => executeTool(name, input, ctx), pendingResults: [],
+        replayKey: replayKeyOf(ctx.subject),
       })
+      record = { ...record, modelSources: { 1: outcome.sources } }
       if (!record.report) {
         const rules = { familySummary: 'Claude could not read this request. Please call Mom.', elderMessage: 'We told your family about this request. Please do not buy anything until you talk to them.', callQuestions: ['Who asked you for this?'], source: outcome.outcome === 'llm_error' ? 'rules' : 'limit' }
         record = { ...record, report: record.findings.length ? limitReport(record.findings, []) : rules }

@@ -111,6 +111,7 @@ function reportCall({ level, kinds, info, answer, isRequest }) {
 export function createMockLlm() {
   return {
     mode: 'mock',
+    label: 'Scripted stand-in',
     async step({ messages }) {
       const call = plan(history(messages), messages)
       return { stop_reason: 'tool_use', content: [call] }

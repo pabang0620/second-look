@@ -1,0 +1,278 @@
+{
+  "key": "payment|mobility_direct|64000|scooter, today only price|Price goes up tomorrow. Did you pay yet? Don't tell your son, it's a surprise.|0",
+  "scenario": 1,
+  "title": "Shop scam",
+  "model": "claude-sonnet-5-5",
+  "modelName": "Claude Sonnet",
+  "backend": "account (local Claude Code login, no API key)",
+  "recordedAt": "2026-11-12",
+  "segment1": [
+    {
+      "ms": 4148,
+      "calls": [
+        {
+          "name": "get_payment_request",
+          "input": {},
+          "result": "{\"amount_usd\":\"640.00\",\"kind\":\"payment\",\"memo\":\"scooter, today only price\",\"message\":\"Price goes up tomorrow. Did you pay yet? Don't tell your son, it's a surprise.\",\"payee_display_name\":\"Mobility Direct Outlet\",\"second_request\":false}"
+        }
+      ]
+    },
+    {
+      "ms": 4700,
+      "calls": [
+        {
+          "name": "get_order",
+          "input": {},
+          "result": "{\"amount_matches_request\":true,\"amount_usd\":\"640.00\",\"memo\":\"scooter, today only price\",\"memo_matches_request\":true,\"payee_email\":\"sales@quickdeal-outlet.example\",\"status\":\"COMPLETED\"}"
+        },
+        {
+          "name": "check_lookalike",
+          "input": {},
+          "result": "{\"display_name\":\"Mobility Direct Outlet\",\"email_domain\":\"quickdeal-outlet.example\",\"impersonates\":[],\"name_matches_domain\":false}"
+        },
+        {
+          "name": "search_scam_patterns",
+          "input": {},
+          "result": "{\"checked\":true,\"matches\":[{\"label\":\"Pressure to act fast\",\"note\":\"This is a common sign of a scam\",\"quote\":\"Price goes up tomorrow.\",\"source\":null,\"type\":\"urgency\"},{\"label\":\"Asks you to keep it secret\",\"note\":\"Scammers try to isolate you by saying you cannot tell anyone (FTC)\",\"quote\":\"Don't tell your son, it's a surprise.\",\"source\":{\"org\":\"FTC\",\"title\":\"Consumer alert, 2025-11-20\",\"url\":\"https://consumer.ftc.gov/consumer-alerts/2025/11/agent-told-me-stay-internet-it-scam\"},\"type\":\"secrecy\"}]}"
+        },
+        {
+          "name": "get_payee_profile",
+          "input": {},
+          "result": "{\"display_name\":\"Mobility Direct Outlet\",\"earlier_captured_payments\":0,\"email\":\"sales@quickdeal-outlet.example\",\"email_domain\":\"quickdeal-outlet.example\",\"first_time\":true,\"on_family_allowlist\":false}"
+        }
+      ]
+    },
+    {
+      "ms": 6539,
+      "calls": [
+        {
+          "name": "record_finding",
+          "input": {
+            "kind": "name_domain_mismatch",
+            "quote": "Mobility Direct Outlet paid to sales@quickdeal-outlet.example",
+            "source_tool": "check_lookalike"
+          },
+          "result": "{\"saved\":true}"
+        },
+        {
+          "name": "record_finding",
+          "input": {
+            "kind": "urgency",
+            "quote": "Price goes up tomorrow. Did you pay yet?",
+            "source_tool": "search_scam_patterns"
+          },
+          "result": "{\"saved\":true}"
+        },
+        {
+          "name": "record_finding",
+          "input": {
+            "kind": "secrecy",
+            "quote": "Don't tell your son, it's a surprise.",
+            "source_tool": "search_scam_patterns"
+          },
+          "result": "{\"saved\":true}"
+        },
+        {
+          "name": "raise_risk",
+          "input": {
+            "level": "high",
+            "reason": "Three signals: seller name does not match email domain, pressure to pay today, and a request to keep it secret from family. First-time seller."
+          },
+          "result": "{\"risk\":\"high\"}"
+        },
+        {
+          "name": "ask_elder",
+          "input": {
+            "question_id": "how_found"
+          }
+        }
+      ]
+    }
+  ],
+  "outcome": {
+    "state": "HELD_ASKING",
+    "risk": "high",
+    "findings": [
+      "name_domain_mismatch",
+      "urgency",
+      "secrecy"
+    ],
+    "asked": true,
+    "reportSource": null,
+    "familySummary": null,
+    "seconds": 15.4,
+    "afterAnswer": {
+      "An ad or post": {
+        "state": "HELD",
+        "risk": "high",
+        "findings": [
+          "name_domain_mismatch",
+          "urgency",
+          "secrecy",
+          "social_media_origin"
+        ],
+        "asked": true,
+        "reportSource": "claude",
+        "familySummary": "Hold this $640.00 payment to \"Mobility Direct Outlet\" for a scooter. The seller is new to your family. The name does not match the PayPal email domain (quickdeal-outlet.example). The message says \"Price goes up tomorrow\" (pressure) and \"Don't tell your son, it's a surprise\" (secrecy). The payer says they found the seller through an ad or post. That answer does not lower the risk. Amount and memo match the order.",
+        "seconds": 7
+      },
+      "They contacted me": {
+        "state": "HELD",
+        "risk": "high",
+        "findings": [
+          "name_domain_mismatch",
+          "urgency",
+          "secrecy"
+        ],
+        "asked": true,
+        "reportSource": "claude",
+        "familySummary": "Held payment of $640.00 to \"Mobility Direct Outlet\" for a scooter. First-time seller, not on the allowlist. The PayPal email is sales@quickdeal-outlet.example, which does not match the seller name. The message says \"Price goes up tomorrow\" and \"Don't tell your son, it's a surprise.\" That is pressure plus secrecy. The payer says the seller contacted them first. Amount and memo match the order. Please call before releasing.",
+        "seconds": 6.3
+      },
+      "I found them": {
+        "state": "HELD",
+        "risk": "high",
+        "findings": [
+          "name_domain_mismatch",
+          "urgency",
+          "secrecy"
+        ],
+        "asked": true,
+        "reportSource": "claude",
+        "familySummary": "Held: $640.00 to \"Mobility Direct Outlet\" for a scooter. First-time seller, not on the allowlist. The PayPal email is sales@quickdeal-outlet.example, which does not match the seller name. The message says \"Price goes up tomorrow\" and \"Don't tell your son, it's a surprise.\" That is pressure plus secrecy. Amount and memo match the order. Asked how they found the seller, the payer said only \"I found them.\" This does not lower the risk.",
+        "seconds": 10.1
+      },
+      "Not sure": {
+        "state": "HELD",
+        "risk": "high",
+        "findings": [
+          "name_domain_mismatch",
+          "urgency",
+          "secrecy"
+        ],
+        "asked": true,
+        "reportSource": "claude",
+        "familySummary": "Held payment of $640.00 to \"Mobility Direct Outlet\" for \"scooter, today only price\". First-time seller, not on the family allowlist. The seller name does not match the email domain (sales@quickdeal-outlet.example). The message says \"Price goes up tomorrow\" and \"Don't tell your son, it's a surprise.\" That is pressure to pay fast plus a request for secrecy. The amount and memo match the order. When asked how they found the seller, the payer answered \"Not sure\". That answer does not lower the risk.",
+        "seconds": 5.9
+      },
+      "No answer": {
+        "state": "HELD",
+        "risk": "high",
+        "findings": [
+          "name_domain_mismatch",
+          "urgency",
+          "secrecy"
+        ],
+        "asked": true,
+        "reportSource": "claude",
+        "familySummary": "Held: $640.00 to \"Mobility Direct Outlet\" for \"scooter, today only price\". First-time seller, not on your allowlist. The PayPal order goes to sales@quickdeal-outlet.example, which does not match the seller name. The message says \"Price goes up tomorrow\" (pressure) and \"Don't tell your son, it's a surprise\" (secrecy). Amount and memo match the order. We asked how the seller was found; there was no answer. That does not lower the risk.",
+        "seconds": 5.8
+      }
+    }
+  },
+  "afterAnswer": {
+    "An ad or post": [
+      {
+        "ms": 6951,
+        "calls": [
+          {
+            "name": "record_finding",
+            "input": {
+              "kind": "social_media_origin",
+              "quote": "An ad or post",
+              "source_tool": "ask_elder"
+            }
+          },
+          {
+            "name": "write_report",
+            "input": {
+              "risk_level": "high",
+              "family_summary": "Hold this $640.00 payment to \"Mobility Direct Outlet\" for a scooter. The seller is new to your family. The name does not match the PayPal email domain (quickdeal-outlet.example). The message says \"Price goes up tomorrow\" (pressure) and \"Don't tell your son, it's a surprise\" (secrecy). The payer says they found the seller through an ad or post. That answer does not lower the risk. Amount and memo match the order.",
+              "elder_message": "Your payment is paused for a quick check with your family, and that is normal. A real seller will wait a day, so there is no rush and nothing is lost.",
+              "call_questions": [
+                "Did you ask them to buy a scooter, or did an ad or post lead you to this seller? Can you show me the ad and the messages?",
+                "Did the seller tell you to keep this from me or to pay today? Can we look up the seller together before any money moves?"
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "They contacted me": [
+      {
+        "ms": 6292,
+        "calls": [
+          {
+            "name": "write_report",
+            "input": {
+              "risk_level": "high",
+              "family_summary": "Held payment of $640.00 to \"Mobility Direct Outlet\" for a scooter. First-time seller, not on the allowlist. The PayPal email is sales@quickdeal-outlet.example, which does not match the seller name. The message says \"Price goes up tomorrow\" and \"Don't tell your son, it's a surprise.\" That is pressure plus secrecy. The payer says the seller contacted them first. Amount and memo match the order. Please call before releasing.",
+              "elder_message": "Your payment is on hold while your family takes a quick look, and no money has moved. It is fine to wait, and a real seller will still be there tomorrow.",
+              "call_questions": [
+                "Did you ask this seller for a scooter, or did they contact you first? How did they get your details?",
+                "They asked you not to tell me. Can we look at the offer together before any money is sent?"
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "I found them": [
+      {
+        "ms": 10102,
+        "calls": [
+          {
+            "name": "write_report",
+            "input": {
+              "risk_level": "high",
+              "family_summary": "Held: $640.00 to \"Mobility Direct Outlet\" for a scooter. First-time seller, not on the allowlist. The PayPal email is sales@quickdeal-outlet.example, which does not match the seller name. The message says \"Price goes up tomorrow\" and \"Don't tell your son, it's a surprise.\" That is pressure plus secrecy. Amount and memo match the order. Asked how they found the seller, the payer said only \"I found them.\" This does not lower the risk.",
+              "elder_message": "We are holding this payment for a quick check with your family. Nothing is lost, and a real seller will wait a day.",
+              "call_questions": [
+                "Did you ask them to keep this from me? Where did you find this seller, and who contacted whom first?",
+                "Can we look up the seller together, using a phone number or website we find ourselves, before any money moves?"
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "Not sure": [
+      {
+        "ms": 5898,
+        "calls": [
+          {
+            "name": "write_report",
+            "input": {
+              "risk_level": "high",
+              "family_summary": "Held payment of $640.00 to \"Mobility Direct Outlet\" for \"scooter, today only price\". First-time seller, not on the family allowlist. The seller name does not match the email domain (sales@quickdeal-outlet.example). The message says \"Price goes up tomorrow\" and \"Don't tell your son, it's a surprise.\" That is pressure to pay fast plus a request for secrecy. The amount and memo match the order. When asked how they found the seller, the payer answered \"Not sure\". That answer does not lower the risk.",
+              "elder_message": "We're holding this payment for a moment so your family can take a quick look with you. Nothing is lost, and a real seller will wait while you check.",
+              "call_questions": [
+                "How did you find this seller, and did anyone message you first about the scooter? Can you show me the message?",
+                "Can we look up Mobility Direct Outlet together and call a phone number from its official website, not one from the message?"
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "No answer": [
+      {
+        "ms": 5842,
+        "calls": [
+          {
+            "name": "write_report",
+            "input": {
+              "risk_level": "high",
+              "family_summary": "Held: $640.00 to \"Mobility Direct Outlet\" for \"scooter, today only price\". First-time seller, not on your allowlist. The PayPal order goes to sales@quickdeal-outlet.example, which does not match the seller name. The message says \"Price goes up tomorrow\" (pressure) and \"Don't tell your son, it's a surprise\" (secrecy). Amount and memo match the order. We asked how the seller was found; there was no answer. That does not lower the risk.",
+              "elder_message": "We are holding this payment for a quick check, and nothing has been lost. A family member will call you soon, so please wait for that call before paying anyone.",
+              "call_questions": [
+                "How did you find this seller, and did someone message you first? Can you show me the message?",
+                "Who told you not to tell the family, and why? Can we look together at the seller's website and the email address it paid to?"
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

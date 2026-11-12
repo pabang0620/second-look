@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url'
 import { createServices } from './services.js'
 import { createApp } from './app.js'
 import { loadConfig } from './config.js'
-import { selectLlm } from './agent/selectLlm.js'
+import { selectLlm, localLlm } from './agent/selectLlm.js'
 import { createPayeeRegistry } from './paypal/payees.js'
 import { createHouseholdPool } from './households.js'
 
@@ -20,7 +20,7 @@ export function wireMockWebhooks(svc) {
 export function start() {
   const config = loadConfig()
   // One live model client is shared; each visitor still gets a household (store, tokens, mock PayPal, scheduler) of their own.
-  const llm = selectLlm(config)
+  const llm = selectLlm(config) || localLlm(config)
   const pool = createHouseholdPool({
     build() {
       const svc = createServices({ config, llm })
@@ -31,8 +31,8 @@ export function start() {
   })
   const app = createApp(pool)
   const server = app.listen(config.port, () => {
-    const modes = createPayeeRegistry(config.env, undefined, { forceMock: config.forceMock }).list().map((p) => p.credentials.mode)
-    process.stdout.write(`Second Look on ${config.publicUrl} (model: ${llm ? (llm.mode === 'account' ? 'Claude Sonnet (local account)' : 'live Claude') : 'scripted stand-in'}, PayPal: ${modes.includes('sandbox') ? 'sandbox' : 'local mock'})\n`)
+    const modes = createPayeeRegistry(config.env, undefined, { forceMock: config.paypalLocal }).list().map((p) => p.credentials.mode)
+    process.stdout.write(`Second Look on ${config.publicUrl} (model: ${llm.label}, PayPal: ${modes.includes('sandbox') ? 'sandbox' : 'local mock'})\n`)
   })
   return { pool, server }
 }

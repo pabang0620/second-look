@@ -1,0 +1,86 @@
+{
+  "key": "request|50000|Pay $500 in gift cards today and keep this between us.",
+  "scenario": 5,
+  "title": "Gift card request",
+  "model": "claude-sonnet-5-5",
+  "modelName": "Claude Sonnet",
+  "backend": "account (local Claude Code login, no API key)",
+  "recordedAt": "2026-11-12",
+  "segment1": [
+    {
+      "ms": 5472,
+      "calls": [
+        {
+          "name": "get_payment_request",
+          "input": {},
+          "result": "{\"amount_usd\":\"500.00\",\"kind\":\"request\",\"message\":\"Pay $500 in gift cards today and keep this between us.\"}"
+        },
+        {
+          "name": "search_scam_patterns",
+          "input": {},
+          "result": "{\"checked\":true,\"matches\":[{\"label\":\"Asks you to keep it secret\",\"note\":\"Scammers try to isolate you by saying you cannot tell anyone (FTC)\",\"quote\":\"Pay $500 in gift cards today and keep this between us.\",\"source\":{\"org\":\"FTC\",\"title\":\"Consumer alert, 2025-11-20\",\"url\":\"https://consumer.ftc.gov/consumer-alerts/2025/11/agent-told-me-stay-internet-it-scam\"},\"type\":\"secrecy\"},{\"label\":\"Asks for gift cards\",\"note\":\"Only scammers will tell you to buy a gift card (FTC)\",\"quote\":\"Pay $500 in gift cards today and keep this between us.\",\"source\":{\"org\":\"FTC\",\"title\":\"Avoiding and Reporting Gift Card Scams\",\"url\":\"https://consumer.ftc.gov/articles/avoiding-and-reporting-gift-card-scams\"},\"type\":\"gift_card\"}]}"
+        }
+      ]
+    },
+    {
+      "ms": 8028,
+      "calls": [
+        {
+          "name": "record_finding",
+          "input": {
+            "kind": "gift_card",
+            "quote": "Pay $500 in gift cards today and keep this between us.",
+            "source_tool": "search_scam_patterns"
+          },
+          "result": "{\"saved\":true}"
+        },
+        {
+          "name": "record_finding",
+          "input": {
+            "kind": "secrecy",
+            "quote": "Pay $500 in gift cards today and keep this between us.",
+            "source_tool": "search_scam_patterns"
+          },
+          "result": "{\"saved\":true}"
+        },
+        {
+          "name": "record_finding",
+          "input": {
+            "kind": "urgency",
+            "quote": "Pay $500 in gift cards today and keep this between us.",
+            "source_tool": "get_payment_request"
+          },
+          "result": "{\"saved\":true}"
+        }
+      ]
+    },
+    {
+      "ms": 6066,
+      "calls": [
+        {
+          "name": "write_report",
+          "input": {
+            "risk_level": "high",
+            "family_summary": "High risk. The message demands $500 in gift cards today and says to keep it between us. Gift cards as payment, a same-day deadline and a request for secrecy are classic scam signs, and the FTC says only scammers ask for payment in gift cards. No money has been sent. Please call the person who received this and do not buy any cards.",
+            "elder_message": "This looks like a scam, so please do not buy any gift cards or send anything. It is always okay to stop and talk to your family before you do anything.",
+            "call_questions": [
+              "Who contacted you, and how did they say they know you? Did they ask you to keep it secret or to hurry?",
+              "Have you bought any gift cards or shared any card numbers, codes or personal details yet? If so, we can call the card company right away."
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "outcome": {
+    "risk": "high",
+    "findings": [
+      "gift_card",
+      "secrecy",
+      "urgency"
+    ],
+    "reportSource": "claude",
+    "familySummary": "High risk. The message demands $500 in gift cards today and says to keep it between us. Gift cards as payment, a same-day deadline and a request for secrecy are classic scam signs, and the FTC says only scammers ask for payment in gift cards. No money has been sent. Please call the person who received this and do not buy any cards.",
+    "seconds": 19.6
+  }
+}

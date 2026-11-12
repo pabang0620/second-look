@@ -5,6 +5,7 @@ export function createAnthropicLlm({ apiKey, model }) {
   const client = new Anthropic({ apiKey })
   return {
     mode: 'live',
+    label: 'Claude (API)',
     async step({ system, tools, messages, deadline, now }) {
       const remaining = Math.max(1000, deadline - now())
       const response = await client.messages.create(
