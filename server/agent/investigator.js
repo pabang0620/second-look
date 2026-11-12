@@ -84,7 +84,7 @@ export function createInvestigator({ store, registry, gateway, llm, clock, wall 
       now: wall.now,
       execute: (name, input) => executeTool(name, input, ctx),
       pendingResults,
-      replayKey: replayKeyOf(ctx.subject, ctx.payee.key),
+      replayKey: replayKeyOf(ctx.subject, ctx.payee.key, ctx.payee.credentials.mode),
     })
     store.update(id, (p) => ({ modelSources: { ...(p.modelSources || {}), [segment]: outcome.sources } }))
     const used = { ...(payment.agent?.used || {}), record_finding: outcome.budget.record_finding, raise_risk: outcome.budget.raise_risk, ask_elder: outcome.budget.ask_elder, write_report: outcome.budget.write_report }

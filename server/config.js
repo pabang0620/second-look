@@ -37,17 +37,20 @@ export function loadConfig(env = process.env) {
   const port = num(env.PORT, 3001)
   const publicUrl = (env.PUBLIC_URL || `http://localhost:${port}`).replace(/\/$/, '')
   const forceMock = env.FORCE_MOCK === '1'
-  // LOCAL_ONLY=1 (video recording): no PayPal keys, no API key, no account model; recorded runs still replay.
+  // LOCAL_ONLY=1: no PayPal keys, no API key, no account model; recorded runs still replay.
   const localOnly = env.LOCAL_ONLY === '1'
   const noOutside = forceMock || localOnly
+  // LLM_BACKEND=replay (npm run demo:video): the recorded Claude runs only, never the API key or the account,
+  // while sellers with sandbox keys still go to the PayPal sandbox.
+  const replayOnly = env.LLM_BACKEND === 'replay'
   return {
     port,
     publicUrl,
     forceMock,
     localOnly,
     paypalLocal: noOutside,
-    anthropicKey: noOutside ? '' : env.ANTHROPIC_API_KEY || '',
-    llmBackend: forceMock ? 'mock' : localOnly ? 'local' : env.LLM_BACKEND === 'account' ? 'account' : env.LLM_BACKEND === 'scripted' ? 'scripted' : 'api',
+    anthropicKey: noOutside || replayOnly ? '' : env.ANTHROPIC_API_KEY || '',
+    llmBackend: forceMock ? 'mock' : localOnly ? 'local' : replayOnly ? 'replay' : env.LLM_BACKEND === 'account' ? 'account' : env.LLM_BACKEND === 'scripted' ? 'scripted' : 'api',
     anthropicModel: env.ANTHROPIC_MODEL || 'claude-sonnet-5-5',
     timers: buildTimers(env),
     paypalApiBase: env.PAYPAL_API_BASE || 'https://api-m.sandbox.paypal.com',

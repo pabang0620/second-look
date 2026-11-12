@@ -203,7 +203,7 @@ Kinds that count as unknown on a write: `ConnectionError`, `TimeoutError`, and `
 
 | Invariant | Where the legal set comes from | Enforced where | The test that proves it |
 | --- | --- | --- | --- |
-| An order, authorization or capture id can only be used with the seller app that owns it (one `PaypalClient` per seller) | the payment record's `payeeKey` (the app's own record); PayPal also answers `PERMISSION_NOT_GRANTED` for a foreign id | `payeeOf(p)` in `lifecycle.js` picks the client; `createSdkClients` caches per client id | existing `each_payee_has_its_own_credentials` (mock, PERMISSION_NOT_GRANTED) and `sdk_adapter_uses_each_payees_own_token_and_fixed_request_id` (SDK) |
+| An order, authorization or capture id can only be used with the seller app that owns it (one `PaypalClient` per seller) | the payment record's `payeeKey` (the app's own record); the sandbox answered `401 PERMISSION_DENIED` for a foreign authorization id, read and capture (VERIFY V14, 2026-11-12); the docs list `PERMISSION_NOT_GRANTED` for this case | `payeeOf(p)` in `lifecycle.js` picks the client; `createSdkClients` caches per client id | existing `each_payee_has_its_own_credentials` (mock, PERMISSION_NOT_GRANTED) and `sdk_adapter_uses_each_payees_own_token_and_fixed_request_id` (SDK) |
 | Capture amount equals the held amount, set by the server | `payment.amountCents` | `captureNow` passes `p.amountCents`; `toValue` formats | `capture_amount_is_computed_by_server_code` |
 
 ## 5. WHEN THE API SAYS NO

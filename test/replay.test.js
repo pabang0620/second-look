@@ -9,7 +9,8 @@ import { loadConfig } from '../server/config.js'
 import { familyView } from '../server/views.js'
 import { STATES } from '../server/store.js'
 
-const RUNS = loadRecordedRuns()
+// Local recordings only; the sandbox recording (key ending |sandbox) is covered in test/sandboxDemo.test.js.
+const RUNS = loadRecordedRuns().filter((r) => !r.key.endsWith('|sandbox'))
 const replay = (runs = RUNS) => createReplayLlm({ runs, fallback: createMockLlm(), paceMs: 0 })
 const MONEY_TOOLS = ['capture', 'void', 'release', 'refund', 'approve']
 const view = (env, p) => familyView(env.store.get(p.id), { registry: env.registry, now: env.clock.now(), household: env.store.household() })

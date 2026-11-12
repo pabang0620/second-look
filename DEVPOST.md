@@ -8,7 +8,7 @@ The FTC's advice to older adults is "Stop and talk to someone you trust" (https:
 
 ## Who it is for
 
-The first user is a person 60 or older who already pays online with PayPal, together with the one adult child who already helps with their bills and whom they choose to look at a risky first payment (in the demo: Margaret and her daughter Sarah). There was no user research for this prototype.
+The first user is a person 60 or older who already pays online with PayPal, together with the one adult child who already helps with their bills and whom they choose to look at a risky first payment (in the demo: Margaret and her daughter Sarah). How common that pair is: AARP and the National Alliance for Caregiving count 63 million US family caregivers in 2025; 58% of them help manage the care recipient's finances (figure 18) and 39% already use digital tools to do it (Caregiving in the US 2025, https://www.aarp.org/content/dam/aarp/ppi/topics/ltss/family-caregiving/caregiving-in-us-2025.doi.10.26419-2fppi.00373.001.pdf). Those numbers cover all family caregivers, not PayPal users. We did no user research of our own for this prototype.
 
 ## The problem, with its limits
 
@@ -35,7 +35,7 @@ A payment from an older adult to a first-time or risky seller stays an uncapture
 
 ## Accomplishments
 
-Sandbox run on 2026-11-12: create, authorize, capture and void passed through the SDK (V1, V2, V11, V13); a repeated `PayPal-Request-Id` returned the same capture and the same order (V2, V12). 87 tests pass with every outside service faked.
+Sandbox run on 2026-11-12: create, authorize, capture and void passed through the SDK (V1, V2, V11, V13); a repeated `PayPal-Request-Id` returned the same capture and the same order (V2, V12); another app refused with 401 `PERMISSION_DENIED` (V14); scenario 1 end to end in sandbox demo mode (S1). 93 tests pass with every outside service faked.
 
 ## What we learned
 
@@ -45,12 +45,13 @@ The honest conclusion is that this belongs inside PayPal: a third-party app cann
 
 - **Merchant volume stays.** Known sellers and small payments are captured at once; only a new seller with a risk signal waits, and an approved payment is captured as usual. The checkout is not blocked, so the payment stays with PayPal instead of the family being left with "do not pay online" as the only safe advice.
 - **Less loss after the fact.** A payment the family stops is never captured, so it never becomes a dispute or a refund of money that already moved. No cost figure is claimed, because none was measured.
-- **A product PayPal could ship:** "Trusted Contact" in account settings, on states PayPal already documents: an uncaptured authorization, or a capture held as `PENDING` with reason `PENDING_REVIEW` ("The captured payment is pending manual review", https://developer.paypal.com/api/orders/v2/definitions/capture_status_details). It adds a second person to PayPal's own AI scam alerts for Friends and Family payments, which warn the sender (https://newsroom.paypal-corp.com/2025-7-21-Introducing-AI-Powered-Scam-Alerts-for-Friends-and-Family-Payments). A third-party app cannot do this for other merchants: PayPal documents `PERMISSION_NOT_GRANTED` for capturing another payee's authorization (https://developer.paypal.com/api/payments/v2/errors/permission_not_granted; a live check is VERIFY V14, not run yet).
+- **A product PayPal could ship:** "Trusted Contact" in account settings, on states PayPal already documents: an uncaptured authorization, or a capture held as `PENDING` with reason `PENDING_REVIEW` ("The captured payment is pending manual review", https://developer.paypal.com/api/orders/v2/definitions/capture_status_details). It adds a second person to PayPal's own AI scam alerts for Friends and Family payments, which warn the sender (https://newsroom.paypal-corp.com/2025-7-21-Introducing-AI-Powered-Scam-Alerts-for-Friends-and-Family-Payments). A third-party app cannot do this for other merchants, and we measured it: a second sandbox app tried to read and to capture another app's authorization (5NL78904JR352810V) and the sandbox answered `401 PERMISSION_DENIED` both times (VERIFY V14; the docs name `PERMISSION_NOT_GRANTED`, https://developer.paypal.com/api/payments/v2/errors/permission_not_granted).
 
 ## What the demo proves today, and what needs PayPal
 
 - Proven today: hold as an uncaptured authorization, capture after family approval, void on Stop or on no answer, on the PayPal sandbox (V1, V2, V11); idempotent money calls (V2, V12); Claude investigating with tools and asking one question, recorded from the real model (V6).
-- Needs PayPal or partners: the check on any PayPal checkout, a Trusted Contact setting with consent, seller handling of `PENDING_REVIEW` captures, sandbox webhooks (V4) and the cross-app refusal (V14).
+- Also proven on the sandbox: another merchant's app is refused (`401 PERMISSION_DENIED` on read and capture, V14); the Agent Toolkit `get_order` reads real sandbox orders (T1); the full scenario 1 in sandbox demo mode, with the payer approving in the PayPal window, the recorded Claude run made on a sandbox order, and Stop voiding authorization 5T8904334N5048042 (S1).
+- Needs PayPal or partners: the check on any PayPal checkout, a Trusted Contact setting with consent, seller handling of `PENDING_REVIEW` captures, sandbox webhooks (V4).
 
 ## What's next
 

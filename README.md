@@ -13,7 +13,7 @@ Entry for the PayPal AI Hackathon 2026, aimed at Most Impactful and Best Use of 
 ## Read this first: what this prototype is and is not
 
 - **Coverage:** payments made in Second Look. Built into PayPal, the same check would cover any PayPal checkout.
-- **First-party credentials, by design.** The design gives each seller its own sandbox business account and REST app; the code keeps one client per seller, and the prototype holds those credentials to play the role PayPal would play internally. The sandbox run so far used one app for all sellers (VERIFY V3 is still open). A third-party app cannot capture another merchant's authorization (PayPal documents a `PERMISSION_NOT_GRANTED` error for this, https://developer.paypal.com/api/payments/v2/errors/permission_not_granted; showing it live is VERIFY V14, not yet run), so the honest conclusion is that this feature has to live inside PayPal.
+- **First-party credentials, by design.** The design gives each seller its own sandbox business account and REST app; the code keeps one client per seller, and the prototype holds those credentials to play the role PayPal would play internally. A third-party app cannot capture another merchant's authorization: on 2026-11-12 a second sandbox REST app (another business account) tried to read and to capture authorization 5NL78904JR352810V, which the first app had created, and the sandbox answered `401 PERMISSION_DENIED` both times, while the owning app read it and later voided it (VERIFY V14). So the honest conclusion is that this feature has to live inside PayPal. Running all five sellers on separate apps in one server (VERIFY V3) is still open.
 - **What we propose to PayPal (a proposal, not an existing feature):** PayPal's capture API already defines a `PENDING` status with a `PENDING_REVIEW` reason ("The captured payment is pending manual review", https://developer.paypal.com/api/orders/v2/definitions/capture_status_details). We suggest reusing that state for family confirmation, with the family decision moving it to `COMPLETED` or `DENIED`. How many seller integrations handle this state today is not known to us.
 - **Seller impact, stated plainly:** only a new seller combined with a risk signal is held, for at most 70 hours. The seller sees an unconfirmed payment during that time. If the family stops it, the seller sees a declined payment, which is what PayPal already does for payments it detects as highly risky.
 - **What it cannot stop:** in the FBI IC3 2025 report, $4.35 billion of the $7.75 billion lost by people 60 and older carried a cryptocurrency link (about 56%), and the FTC reports bank transfers and cryptocurrency as the payment methods with the highest reported losses. Second Look cannot hold those. It targets online shopping scams paid through a payment app, and for requests outside PayPal (gift cards, coin ATMs, transfers) it only checks the text and tells the family ("Check a request").
@@ -21,7 +21,7 @@ Entry for the PayPal AI Hackathon 2026, aimed at Most Impactful and Best Use of 
 
 ## Who it is for
 
-A person 60 or older who already pays with PayPal online, and one family member who is willing to look at risky payments. The family member sets it up; the older person chooses the contact and agrees. There was no user research for this prototype and none is claimed.
+A person 60 or older who already pays with PayPal online, and one family member who is willing to look at risky payments. The family member sets it up; the older person chooses the contact and agrees. How common that pair is: AARP and the National Alliance for Caregiving count 63 million US family caregivers in 2025; 58% of them help manage the care recipient's finances (figure 18) and 39% already use digital tools to do it (Caregiving in the US 2025, https://www.aarp.org/content/dam/aarp/ppi/topics/ltss/family-caregiving/caregiving-in-us-2025.doi.10.26419-2fppi.00373.001.pdf). Those numbers cover all family caregivers, not PayPal users. We did no user research of our own for this prototype.
 
 ## What happens
 
@@ -78,7 +78,7 @@ npm run build
 npm start                 # http://localhost:3001
 ```
 
-Development: `npm run dev:server` and `npm run dev:client` (Vite on 5173 proxies to 3001). Tests: `npm test` (runs with `FORCE_MOCK=1`, so it never reaches PayPal or a model). Video: script in `docs/VIDEO_SCRIPT.md`, recording state `npm run demo:video` (builds, then starts in local mode with recorded runs, 75 s auto void, 10 s undo; PayPal and model keys in `.env` are ignored). Real model through your Claude Code login, no API key: `LLM_BACKEND=account npm start`, `npm run v6:account` for the scripted check (VERIFY V6), and `npm run record:runs` to record the runs again.
+Development: `npm run dev:server` and `npm run dev:client` (Vite on 5173 proxies to 3001). Tests: `npm test` (runs with `FORCE_MOCK=1`, so it never reaches PayPal or a model). Video: script in `docs/VIDEO_SCRIPT.md`, recording state `npm run demo:video` (builds, then starts in local mode with recorded runs, 75 s auto void, 10 s undo; PayPal and model keys in `.env` are ignored). Sandbox demo mode (for a deployed server with sandbox keys): put the seller keys in `.env` and run `npm run build && npm run start:sandbox`. Payments to sellers with keys go to the PayPal sandbox (the payer logs in with a sandbox buyer account in the PayPal window), the model is the recorded Claude runs only (no API key or account login is read), and the header says which sellers are live, for example "PayPal: sandbox for 1 of 5 sellers"; the PayPal panel then shows the real order and authorization ids. `SANDBOX_SELLERS=mobility_direct` limits the sandbox to scenario 1's seller. Scenario 1 has its own recording made on a sandbox order (`recorded-runs/scenario-1-sandbox.json`, `npm run record:sandbox`), replayed for the answer "An ad or post"; other answers continue with the scripted stand-in and the card says so. Real model through your Claude Code login, no API key: `LLM_BACKEND=account npm start`, `npm run v6:account` for the scripted check (VERIFY V6), and `npm run record:runs` to record the runs again.
 
 **Local mode** needs no accounts and makes no outside calls. A stand-in PayPal with the same response shapes (and the same ownership rule: an app can only touch its own authorizations) delivers signed webhooks to the app's own webhook endpoint, and the investigation replays the recorded Claude runs (see above). Judge mode shows a "local mode" label whenever it is in use.
 
@@ -126,7 +126,8 @@ The first user is a person 60 or older who already pays online with PayPal, toge
 | Hold as an uncaptured authorization, capture after family approval, void on Stop or no answer, on the PayPal sandbox (VERIFY V1, V2, V11) | Running the check for any PayPal checkout, not only payments made in Second Look |
 | Idempotent money calls with a fixed `PayPal-Request-Id` (V2, V12 create replay) | A Trusted Contact setting in the PayPal account and consent flow |
 | Claude investigating with tools and asking one question, recorded from the real model (V6, `server/agent/recorded-runs/`) | Seller-side handling of `PENDING_REVIEW` captures at scale (unknown today) |
-| Signed webhooks moving state forward only, against the local stand-in | Sandbox webhook delivery (V4) and the refusal for another app (V14), which need a public URL and two sandbox apps |
+| Signed webhooks moving state forward only, against the local stand-in | Sandbox webhook delivery (V4), which needs a public URL |
+| Another merchant's app refused on the sandbox: `401 PERMISSION_DENIED` for read and capture (V14) | The same check inside PayPal for any checkout |
 
 ## Roadmap
 
@@ -149,7 +150,8 @@ This repository is not meant to become a product by itself: it holds seller cred
 | `PAYPAL_API_BASE` | PayPal host; must be `https://api-m.sandbox.paypal.com` when any seller has keys, otherwise startup stops | `https://api-m.sandbox.paypal.com` |
 | `PAYPAL_TRANSPORT` | `sdk` (APIMatic SDK) or `rest` (earlier REST adapter) for Orders and Payments calls | `sdk` |
 | `FORCE_MOCK` | 1 = ignore the Anthropic key, `LLM_BACKEND` and every seller's PayPal keys, and use only the scripted stand-in (`npm test` sets it) | unset |
-| `LLM_BACKEND` | `account` = run Claude through your local Claude Code login (shown as "Claude Sonnet (local account)"); no API key is read or sent. Local development only. `scripted` = the scripted stand-in only, no recordings | unset |
+| `LLM_BACKEND` | `account` = run Claude through your local Claude Code login (shown as "Claude Sonnet (local account)"); no API key is read or sent. Local development only. `scripted` = the scripted stand-in only, no recordings. `replay` = recorded runs only, never the API key, while PayPal keys stay live (`npm run start:sandbox` sets it) | unset |
+| `SANDBOX_SELLERS` | comma list of seller keys that may use the sandbox; the others use the local stand-in even with keys | unset (all sellers with keys) |
 | `LOCAL_ONLY` | 1 = ignore PayPal keys, the API key and `LLM_BACKEND`, but keep replaying recorded runs (`npm run demo:video` sets it) | unset |
 
 ## What is not in this version
@@ -158,7 +160,7 @@ Real text messages or push (alerts are on screen), voice call analysis (the Call
 
 ## Sandbox evidence (VERIFY.md, 2026-11-12)
 
-Passed against the PayPal sandbox or, for V6, the real model: **V1** create and authorize, **V2** capture, void and Request-Id replay, **V5** contract sheet matched except the empty authorize body, **V6** Claude Sonnet through a local Claude Code account, **V10** SDK smoke, **V11** create, authorize, capture and void through the SDK, **V12** create_order replay (the lost-answer half was not run), **V13** SDK models carry the ids. Not run: V3, V4, V7, V8, V9, V14. The same list is in the app under the PayPal panel.
+Passed against the PayPal sandbox or, for V6, the real model: **V1** create and authorize, **V2** capture, void and Request-Id replay, **V5** contract sheet matched except the empty authorize body, **V6** Claude Sonnet through a local Claude Code account, **V10** SDK smoke, **V11** create, authorize, capture and void through the SDK, **V12** create_order replay (the lost-answer half was not run), **V13** SDK models carry the ids, **V14** another merchant's app refused (`401 PERMISSION_DENIED` on read and capture), **T1** Agent Toolkit `get_order` read real sandbox orders, **S1** sandbox mode: scenario 1 on a fresh sandbox order (order 6WX23438R12863229, authorization 5T8904334N5048042, `VOIDED`) with the recorded Claude run that was made on a sandbox order. Not run: V3, V4, V7, V8, V9. The same list is in the app under the PayPal panel.
 
 ## Built with the APIMatic Context Plugin
 

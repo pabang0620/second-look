@@ -17,6 +17,17 @@ export function moneyStatus(p) {
   }
 }
 
+// The model sometimes quotes a tool result field by field ("typical_max_usd 84.00, above_usual_range true").
+// The family reads plain words, so field names become words and true/false become yes/no. The stored finding is unchanged.
+const words = (key) => key.replace(/_/g, ' ')
+export function readableQuote(quote) {
+  if (!/\b[a-z]+_[a-z_]+\b/.test(quote)) return quote
+  return quote
+    .replace(/\b([a-z]+(?:_[a-z]+)*)_usd["']?[\s:=]+["']?(\d+(?:\.\d+)?)["']?/g, (_m, key, n) => `${words(key)}: $${n}`)
+    .replace(/\b([a-z]+(?:_[a-z]+)+)["']?[\s:=]+["']?(true|false)\b["']?/g, (_m, key, v) => `${words(key)}: ${v === 'true' ? 'yes' : 'no'}`)
+}
+const readableFindings = (findings) => findings.map((f) => ({ ...f, quote: readableQuote(f.quote) }))
+
 // Which model did the investigation, per segment, so a recording or the scripted stand-in is never shown as live Claude.
 export function modelLabel(sources) {
   const first = sources?.[1] || []
@@ -49,7 +60,7 @@ export function familyView(p, { registry, now, household }) {
     ...base(p, registry, now),
     risk: p.risk, riskLabel: RISK_LABEL[p.risk],
     firstTimeSeller: !household.trustedPayees.has(p.payeeKey),
-    signals: p.signals, findings: p.findings, steps: checks,
+    signals: p.signals, findings: readableFindings(p.findings), steps: checks,
     checks: checks.length, findingsCount: p.findings.length, questionsAsked: p.question ? 1 : 0,
     question: p.question ? { text: p.question.text, answer: p.question.answer, closedBy: p.question.closedBy } : null,
     askSecondsLeft: p.state === STATES.HELD_ASKING ? secondsUntil(p.askExpiresAt, now) : null,
@@ -116,7 +127,7 @@ export function activityList(store, registry) {
 export function requestView(r) {
   return {
     id: r.id, text: r.text, amount: r.amountCents ? formatUsd(r.amountCents) : null, risk: r.risk, createdAt: r.createdAt,
-    steps: r.steps.filter((s) => s.kind === 'check'), findings: r.findings, modelLabel: modelLabel(r.modelSources),
+    steps: r.steps.filter((s) => s.kind === 'check'), findings: readableFindings(r.findings), modelLabel: modelLabel(r.modelSources),
     report: r.report ? { summary: r.report.familySummary, elderMessage: r.report.elderMessage, callQuestions: r.report.callQuestions } : null,
   }
 }

@@ -12,6 +12,9 @@ export const SANDBOX_EVIDENCE = Object.freeze({
     { id: 'V11', text: 'create, authorize, capture and void through the APIMatic SDK' },
     { id: 'V12', text: 'create_order replay: the same PayPal-Request-Id twice returned the same order 5JU63374B9030412J (lost-answer capture not run)' },
     { id: 'V13', text: 'decoded SDK models carry the authorization and capture ids' },
+    { id: 'V14', text: "another merchant's sandbox app was refused on authorization 5NL78904JR352810V: 401 PERMISSION_DENIED for read and for capture; the owning app voided it" },
+    { id: 'T1', text: 'Agent Toolkit get_order read real sandbox orders (4TT06463CT4619626, 3NN76829G7479914N, 6WX23438R12863229)' },
+    { id: 'S1', text: 'sandbox demo mode: scenario 1 on order 6WX23438R12863229, authorization 5T8904334N5048042 VOIDED, with the Claude Sonnet run recorded on a sandbox order' },
   ],
-  open: ['V3 separate app per seller', 'V4 sandbox webhooks (needs a public URL)', 'V7 seller refund', 'V8 return window', 'V9 closed window', 'V14 another app refused'],
+  open: ['V3 all sellers on separate apps in one server', 'V4 sandbox webhooks (needs a public URL)', 'V7 seller refund', 'V8 return window', 'V9 closed window'],
 })

@@ -15,7 +15,8 @@ export function signMockEvent(webhookId, transmissionId, time, body) {
 }
 
 // A stand-in for PayPal with the same response shapes as the Orders and Payments v2 APIs.
-// Orders and authorizations belong to the app (client id) that created them: another app gets PERMISSION_NOT_GRANTED.
+// Orders and authorizations belong to the app (client id) that created them: another app gets 401 PERMISSION_DENIED,
+// which is what the sandbox answered on 2026-11-12 for both a read and a capture (VERIFY V14).
 export function createMockPayPal({ now = () => Date.now(), publicUrl = 'http://localhost:3001' } = {}) {
   const apps = new Map() // clientId -> { secret, payeeKey, merchantId, webhookId }
   const orders = new Map()
@@ -68,7 +69,7 @@ export function createMockPayPal({ now = () => Date.now(), publicUrl = 'http://l
   function owned(app, record, what) {
     if (!record) throw new PayPalError(404, 'RESOURCE_NOT_FOUND', `${what} not found`)
     if (record.clientId !== app.clientId) {
-      throw new PayPalError(403, 'PERMISSION_NOT_GRANTED', 'Payee of the authorization has not granted permission to perform capture on the authorization.')
+      throw new PayPalError(401, 'PERMISSION_DENIED', 'No permission for the requested operation.')
     }
     return record
   }

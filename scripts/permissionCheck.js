@@ -33,6 +33,9 @@ try {
   process.exit(1)
 } catch (err) {
   const e = toPayPalError(err, { write: false })
-  out(`${capture ? 'capture' : 'read'} by ${OTHER} of ${OWNER}'s authorization: status ${e.status} issue ${e.issue}`)
+  // PayPal's own answer (the app maps 401/403 to PROVIDER_CREDENTIALS, which hides the issue code).
+  const body = err?.payload && 'body' in err.payload ? err.payload.body : undefined
+  const issue = body?.details?.[0]?.issue || body?.name || e.issue
+  out(`${capture ? 'capture' : 'read'} by ${OTHER} of ${OWNER}'s authorization: PayPal status ${err?.status ?? e.status} issue ${issue}${body?.debugId ? ` debug_id ${body.debugId}` : ''}`)
   process.exit(0)
 }

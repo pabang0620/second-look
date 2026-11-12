@@ -8,10 +8,12 @@ export const SCRIPTED_LABEL = 'Scripted stand-in'
 const VOLATILE_KEYS = new Set(['order_id', 'merchant_id', 'id'])
 const DEFAULT_PACE_MS = 1200
 
-// The same key is computed when recording and when replaying.
-export function replayKeyOf(subject, payeeKey) {
+// The same key is computed when recording and when replaying. A payment to a seller on the PayPal sandbox gets its own
+// key, because the model reads a real sandbox order there (another seller email), so a local recording never applies.
+export function replayKeyOf(subject, payeeKey, paypalMode = 'mock') {
   if (subject.kind === 'request') return `request|${subject.amountCents || 0}|${subject.text}`
-  return ['payment', payeeKey, subject.amountCents, subject.memo, subject.message || '', subject.secondRequest ? 1 : 0].join('|')
+  const key = ['payment', payeeKey, subject.amountCents, subject.memo, subject.message || '', subject.secondRequest ? 1 : 0].join('|')
+  return paypalMode === 'sandbox' ? `${key}|sandbox` : key
 }
 
 export const recordedLabel = (run) => `Recorded run: ${run.modelName}, ${run.recordedAt}`

@@ -6,6 +6,8 @@ export default function PayPalPanel({ panel, coverage }) {
       <p>
         <strong>PayPal</strong> order <code>{panel.payeeMode === 'sandbox' ? panel.orderId : panel.orderId?.slice(0, 10)}</code> {panel.payee} ({panel.payeeMode === 'mock' ? 'local mode' : 'sandbox'}):
         {' '}<span className="status">{panel.paypalStatus || '-'}</span>
+        {panel.payeeMode === 'sandbox' && panel.authorizationId && <> authorization <code>{panel.authorizationId}</code></>}
+        {panel.payeeMode === 'sandbox' && panel.captureId && <> capture <code>{panel.captureId}</code></>}
       </p>
       <div className="panel-grid">
         <div>

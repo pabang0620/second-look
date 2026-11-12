@@ -25,8 +25,8 @@ test('each_payee_has_its_own_credentials', async () => {
   const env = makeEnv()
   const p = await authorized(env, 2)
   const stranger = env.registry.get('lakeside_tickets')
-  await assert.rejects(env.gateway.captureAuthorization(stranger, p.authorizationId, { amountCents: p.amountCents, requestId: 'x:capture' }), (err) => err.issue === 'PERMISSION_NOT_GRANTED')
-  await assert.rejects(env.gateway.voidAuthorization(stranger, p.authorizationId, 'x:void'), (err) => err.status === 403)
+  await assert.rejects(env.gateway.captureAuthorization(stranger, p.authorizationId, { amountCents: p.amountCents, requestId: 'x:capture' }), (err) => err.issue === 'PERMISSION_DENIED' && err.status === 401)
+  await assert.rejects(env.gateway.voidAuthorization(stranger, p.authorizationId, 'x:void'), (err) => err.status === 401)
   assert.equal(env.mock.operationCount('capture'), 0)
 })
 

@@ -1,0 +1,159 @@
+{
+  "key": "payment|mobility_direct|64000|scooter, today only price|Price goes up tomorrow. Did you pay yet? Don't tell your son, it's a surprise.|0|sandbox",
+  "scenario": 1,
+  "title": "Shop scam (PayPal sandbox)",
+  "model": "claude-sonnet-5-5",
+  "modelName": "Claude Sonnet",
+  "backend": "account (local Claude Code login, no API key); PayPal sandbox order",
+  "recordedAt": "2026-11-12",
+  "segment1": [
+    {
+      "ms": 3338,
+      "calls": [
+        {
+          "name": "get_payment_request",
+          "input": {},
+          "result": "{\"amount_usd\":\"640.00\",\"kind\":\"payment\",\"memo\":\"scooter, today only price\",\"message\":\"Price goes up tomorrow. Did you pay yet? Don't tell your son, it's a surprise.\",\"payee_display_name\":\"Mobility Direct Outlet\",\"second_request\":false}"
+        }
+      ]
+    },
+    {
+      "ms": 3014,
+      "calls": [
+        {
+          "name": "get_order",
+          "input": {},
+          "result": "{\"amount_matches_request\":true,\"amount_usd\":\"640.00\",\"memo\":\"scooter, today only price\",\"memo_matches_request\":true,\"payee_email\":\"sandbox-merchant@business.example.com\",\"status\":\"COMPLETED\"}"
+        },
+        {
+          "name": "search_scam_patterns",
+          "input": {},
+          "result": "{\"checked\":true,\"matches\":[{\"label\":\"Pressure to act fast\",\"note\":\"This is a common sign of a scam\",\"quote\":\"Price goes up tomorrow.\",\"source\":null,\"type\":\"urgency\"},{\"label\":\"Asks you to keep it secret\",\"note\":\"Scammers try to isolate you by saying you cannot tell anyone (FTC)\",\"quote\":\"Don't tell your son, it's a surprise.\",\"source\":{\"org\":\"FTC\",\"title\":\"Consumer alert, 2025-11-20\",\"url\":\"https://consumer.ftc.gov/consumer-alerts/2025/11/agent-told-me-stay-internet-it-scam\"},\"type\":\"secrecy\"}]}"
+        },
+        {
+          "name": "check_lookalike",
+          "input": {},
+          "result": "{\"display_name\":\"Mobility Direct Outlet\",\"email_domain\":\"quickdeal-outlet.example\",\"impersonates\":[],\"name_matches_domain\":false}"
+        }
+      ]
+    },
+    {
+      "ms": 5866,
+      "calls": [
+        {
+          "name": "record_finding",
+          "input": {
+            "kind": "urgency",
+            "quote": "Price goes up tomorrow. Did you pay yet?",
+            "source_tool": "search_scam_patterns"
+          },
+          "result": "{\"saved\":true}"
+        },
+        {
+          "name": "record_finding",
+          "input": {
+            "kind": "secrecy",
+            "quote": "Don't tell your son, it's a surprise.",
+            "source_tool": "search_scam_patterns"
+          },
+          "result": "{\"saved\":true}"
+        },
+        {
+          "name": "record_finding",
+          "input": {
+            "kind": "name_domain_mismatch",
+            "quote": "Mobility Direct Outlet vs email domain quickdeal-outlet.example",
+            "source_tool": "check_lookalike"
+          },
+          "result": "{\"saved\":true}"
+        },
+        {
+          "name": "raise_risk",
+          "input": {
+            "level": "high",
+            "reason": "Urgency and secrecy pressure plus seller name not matching email domain (quickdeal-outlet.example)."
+          },
+          "result": "{\"risk\":\"high\"}"
+        },
+        {
+          "name": "get_payee_profile",
+          "input": {},
+          "result": "{\"display_name\":\"Mobility Direct Outlet\",\"earlier_captured_payments\":0,\"email\":\"sales@quickdeal-outlet.example\",\"email_domain\":\"quickdeal-outlet.example\",\"first_time\":true,\"on_family_allowlist\":false}"
+        },
+        {
+          "name": "get_elder_context",
+          "input": {},
+          "result": "{\"above_usual_range\":true,\"below_usual_range\":false,\"this_payment_usd\":\"640.00\",\"typical_max_usd\":\"84.00\",\"typical_min_usd\":\"20.00\",\"well_above_usual\":true}"
+        }
+      ]
+    },
+    {
+      "ms": 4183,
+      "calls": [
+        {
+          "name": "record_finding",
+          "input": {
+            "kind": "amount_above_usual",
+            "quote": "This payment is $640.00; typical range is $20.00 to $84.00.",
+            "source_tool": "get_elder_context"
+          },
+          "result": "{\"saved\":true}"
+        },
+        {
+          "name": "ask_elder",
+          "input": {
+            "question_id": "how_found"
+          }
+        }
+      ]
+    }
+  ],
+  "afterAnswer": {
+    "An ad or post": [
+      {
+        "ms": 5555,
+        "calls": [
+          {
+            "name": "record_finding",
+            "input": {
+              "kind": "social_media_origin",
+              "quote": "An ad or post",
+              "source_tool": "ask_elder"
+            }
+          },
+          {
+            "name": "write_report",
+            "input": {
+              "risk_level": "high",
+              "family_summary": "Held $640.00 payment to Mobility Direct Outlet (scooter, \"today only price\"). Message says \"Price goes up tomorrow\" and \"Don't tell your son, it's a surprise\" (urgency and secrecy). Seller name doesn't match email domain quickdeal-outlet.example. First-time seller, not on allowlist. Amount is far above the usual $20-$84. Payer says they found it through an ad or post. This answer does not lower the risk.",
+              "elder_message": "We're taking a short pause on this payment to double-check it, which is normal for a new seller. Your family will call you soon, and nothing is lost by waiting.",
+              "call_questions": [
+                "Where did you see this scooter ad or post, and did anyone message you asking you to pay quickly or keep it from me?",
+                "Can we look up Mobility Direct Outlet together, and find a phone number or store we can check before paying?"
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "outcome": {
+    "state": "HELD",
+    "risk": "high",
+    "findings": [
+      "urgency",
+      "secrecy",
+      "name_domain_mismatch",
+      "amount_above_usual",
+      "social_media_origin"
+    ],
+    "asked": true,
+    "sandbox": {
+      "orderId": "3NN76829G7479914N",
+      "authorizationId": "5NL78904JR352810V"
+    },
+    "seconds": 30.3,
+    "afterAnswerSeconds": 5.6,
+    "familySummary": "Held $640.00 payment to Mobility Direct Outlet (scooter, \"today only price\"). Message says \"Price goes up tomorrow\" and \"Don't tell your son, it's a surprise\" (urgency and secrecy). Seller name doesn't match email domain quickdeal-outlet.example. First-time seller, not on allowlist. Amount is far above the usual $20-$84. Payer says they found it through an ad or post. This answer does not lower the risk."
+  }
+}
