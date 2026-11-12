@@ -1,4 +1,8 @@
+<img src="client/public/logo-512.png" width="128" alt="logo" />
+
 # Second Look
+
+**Try it:** https://second-look.35-216-2-121.sslip.io (hosted demo: local mode, recorded Claude Sonnet runs, demo timers; no login).
 
 > The FTC's advice is "Stop and talk to someone you trust." Second Look builds that step into the payment: a payment to a first-time or risky seller stays an uncaptured PayPal authorization while Claude investigates it and shows its work, and a trusted family member taps Approve (capture) or Stop (void). The money never moves to a holding account; it simply is not captured until someone says yes.
 

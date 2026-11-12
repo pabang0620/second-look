@@ -1,3 +1,7 @@
+import Icon from './Icon.jsx'
+
+const PP_ICON = { AUTHORIZED: 'lock', CREATED: 'clock', APPROVED: 'clock', CAPTURED: 'check', COMPLETED: 'check', VOIDED: 'stop' }
+
 export default function PayPalPanel({ panel, coverage }) {
   if (!panel || !panel.paymentId) return <section className="paypal-panel"><p>PayPal: no order yet. Pick a scenario above.</p></section>
   const calls = panel.calls.slice(-6)
@@ -5,7 +9,7 @@ export default function PayPalPanel({ panel, coverage }) {
     <section className="paypal-panel" aria-label="PayPal state">
       <p>
         <strong>PayPal</strong> order <code>{panel.payeeMode === 'sandbox' ? panel.orderId : panel.orderId?.slice(0, 10)}</code> {panel.payee} ({panel.payeeMode === 'mock' ? 'local mode' : 'sandbox'}):
-        {' '}<span className="status">{panel.paypalStatus || '-'}</span>
+        {' '}<span className="pp-state"><Icon name={PP_ICON[panel.paypalStatus] || 'info'} />{panel.paypalStatus || '-'}</span>
         {panel.payeeMode === 'sandbox' && panel.authorizationId && <> authorization <code>{panel.authorizationId}</code></>}
         {panel.payeeMode === 'sandbox' && panel.captureId && <> capture <code>{panel.captureId}</code></>}
       </p>

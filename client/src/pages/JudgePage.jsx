@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { bootstrap, judge } from '../api.js'
+import { judge } from '../api.js'
 import { usePoll } from '../usePoll.js'
 import { pinAfterScenario } from '../judgeLogic.js'
 import ElderApp from '../components/ElderApp.jsx'
@@ -16,14 +16,12 @@ const panelNote = (panel) => (panel?.payeeMode === 'sandbox'
   : 'Local mode uses a stand-in for PayPal with the same response shapes. See VERIFY.md for the sandbox run.')
 
 // Judge mode: the payer and the family side by side, five scenario buttons, and PayPal's own state underneath.
-export default function JudgePage() {
-  const [boot, setBoot] = useState(null)
+export default function JudgePage({ boot }) {
   const [error, setError] = useState('')
   const [pinnedId, setPinnedId] = useState(null) // the payment the payer picked; null = follow the open question, else the newest
   const [prefill, setPrefill] = useState(null) // scenario 5 sentence sent through the payer's own screen
   const { state, error: pollError, refresh } = usePoll(() => judge('GET', `/state${pinnedId ? `?paymentId=${pinnedId}` : ''}`), 1000, Boolean(boot))
 
-  useEffect(() => { bootstrap().then(setBoot).catch((e) => setError(e.message)) }, [])
   useEffect(() => { if (boot) refresh() }, [pinnedId, refresh, boot])
 
   // The seller's message belongs to the payment shown on Margaret's phone (the PayPal panel follows the same payment).
@@ -53,28 +51,28 @@ export default function JudgePage() {
   return (
     <div className="judge">
       <header className="judge-head">
-        <h1>Second Look <span className="small">judge mode</span></h1>
+        <h1 className="judge-title"><img className="brand-logo" src="/logo-512.png" width="36" height="36" alt="Second Look" />Second Look <span className="small">judge mode</span></h1>
         <div className="scenarios" role="group" aria-label="Scenarios">
           {boot?.scenarios.map((s) => <button key={s.n} type="button" className="btn secondary" title={s.ends} onClick={() => start(s.n)}>{s.n} {s.title}</button>)}
           <button type="button" className="link" onClick={reset}>Reset</button>
         </div>
-        <p className="small">{boot?.coverage} {t && <strong>Demo timer: {Math.round(t.autoVoidMs / 60000)} min (real: 70 h){`. Model: ${boot.modes.llmLabel}`}{`. PayPal: ${paypalLabel(boot.modes.paypal)}`}</strong>}</p>
+        <p className="judge-meta">{boot?.coverage} {t && <strong>Demo timer: {Math.round(t.autoVoidMs / 60000)} min (real: 70 h){`. Model: ${boot.modes.llmLabel}`}{`. PayPal: ${paypalLabel(boot.modes.paypal)}`}</strong>}</p>
         {(error || pollError) && <p className="banner" role="alert">{error || pollError}</p>}
       </header>
       <div className="judge-cols">
         <section className="col" aria-label="Margaret, the payer">
-          <h2>MARGARET <span className="small">(payer)</span></h2>
-          {seller.length > 0 && <div className="seller-msg" aria-label="Seller messages">{seller.map((m, i) => <p key={i}>{m}</p>)}</div>}
-          <div className="phone"><ElderApp elder={state?.elder} refresh={refresh} pinnedId={pinnedId} onPin={setPinnedId} checkPrefill={prefill} onCheckDone={() => setPrefill(null)} /></div>
+          <div className="col-head"><span className="avatar elder" aria-hidden="true">M</span><div><h2>Margaret</h2><p>The payer, on her phone</p></div></div>
+          {seller.length > 0 && <div className="seller-msg" aria-label="Seller messages"><h3>Seller messages she pasted</h3>{seller.map((m, i) => <p key={i}>{m}</p>)}</div>}
+          <div className="phone"><ElderApp boot={boot} elder={state?.elder} refresh={refresh} pinnedId={pinnedId} onPin={setPinnedId} checkPrefill={prefill} onCheckDone={() => setPrefill(null)} /></div>
         </section>
         <section className="col" aria-label="Sarah, trusted family">
-          <h2>SARAH <span className="small">(trusted family)</span></h2>
+          <div className="col-head"><span className="avatar" aria-hidden="true">S</span><div><h2>Sarah</h2><p>Trusted family, on her computer</p></div></div>
           <FamilyApp family={state?.family} refresh={refresh} judgeMode />
         </section>
       </div>
       <PayPalPanel panel={state?.panel} coverage={panelNote(state?.panel)} />
       {boot?.evidence && <SandboxEvidence evidence={boot.evidence} />}
-      <p className="small"><a href="/elder">Open the payer page alone</a> / <a href="/family">Open the family page alone</a></p>
+      <p className="judge-meta"><a href="/elder">Open the payer page alone</a> / <a href="/family">Open the family page alone</a></p>
     </div>
   )
 }

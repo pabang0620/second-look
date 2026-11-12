@@ -28,7 +28,7 @@ export default function ReturnPage() {
       <h1>{copy.title}</h1>
       <p>{copy.body}</p>
       <p><button type="button" className="btn secondary" onClick={() => window.close()}>Close this window</button></p>
-      {stillOpen && <p className="small">If this window stays open, close it yourself and go back to Second Look.</p>}
+      {stillOpen && <p>If this window stays open, close it yourself and go back to Second Look.</p>}
       <p><a className="btn" href="/">Go back to Second Look</a></p>
     </main>
   )

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { call } from '../api.js'
+import Icon from './Icon.jsx'
 
 // E4 and E5: no money, only a sentence. Claude checks it and the family is told.
 // `initial` ({ text, amount }) comes from the Judge scenario 5 button: the sentence is filled in and sent through this
@@ -39,13 +40,14 @@ export default function CheckRequest({ elder, onDone, onBack, initial }) {
   if (result) {
     return (
       <section className="screen">
+        <p className="status stop"><Icon name="alert" />Do not send money yet.</p>
         <h2>What we noticed</h2>
-        <ul className="plain">
-          {result.findings.map((f, i) => <li key={i}><strong>{f.kind.replace(/_/g, ' ')}</strong>: "{f.quote}"</li>)}
-          {result.findings.length === 0 && <li>Nothing specific, but please check with {elder.household.familyName}.</li>}
+        <ul className="found">
+          {result.findings.map((f, i) => <li key={i}><Icon name="alert" /><span><strong>{f.kind.charAt(0).toUpperCase() + f.kind.slice(1).replace(/_/g, ' ')}</strong>: "{f.quote}"</span></li>)}
+          {result.findings.length === 0 && <li><Icon name="info" /><span>Nothing specific, but please check with {elder.household.familyName}.</span></li>}
         </ul>
         <p>{result.report?.elderMessage}</p>
-        <p><a className="btn" href={`tel:${elder.household.familyPhone.replace(/[^\d+]/g, '')}`}>Call {elder.household.familyName}</a></p>
+        <p><a className="btn" href={`tel:${elder.household.familyPhone.replace(/[^\d+]/g, '')}`}><Icon name="phone" />Call {elder.household.familyName}</a></p>
         <button type="button" className="btn secondary" onClick={onBack}>Done</button>
       </section>
     )

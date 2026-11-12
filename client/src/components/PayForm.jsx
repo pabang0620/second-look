@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { call } from '../api.js'
+import Icon from './Icon.jsx'
 
 export default function PayForm({ payees, trusted, onCreated }) {
   const known = payees.filter((p) => trusted.includes(p.key))
@@ -35,7 +36,7 @@ export default function PayForm({ payees, trusted, onCreated }) {
       <fieldset className="choices">
         <legend className="sr">Seller</legend>
         {known.map((p) => (
-          <label key={p.key} className="choice"><input type="radio" name="payee" checked={!someoneNew && choice === p.key} onChange={() => { setSomeoneNew(false); setChoice(p.key) }} /> {p.displayName} <span className="tag">known</span></label>
+          <label key={p.key} className="choice"><input type="radio" name="payee" checked={!someoneNew && choice === p.key} onChange={() => { setSomeoneNew(false); setChoice(p.key) }} /> {p.displayName} <span className="tag"><Icon name="check" />known</span></label>
         ))}
         <label className="choice"><input type="radio" name="payee" checked={someoneNew} onChange={() => setSomeoneNew(true)} /> Someone new</label>
       </fieldset>

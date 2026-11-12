@@ -71,6 +71,8 @@ Claude Code with the APIMatic Context Plugin for PayPal wrote the SDK integratio
 
 ## Testing instructions
 
+**Try it:** https://second-look.35-216-2-121.sslip.io (hosted demo: local mode, recorded Claude Sonnet runs, demo timers; no login).
+
 Same numbers as README "Testing instructions for judges":
 
 1. Open `/` (Judge mode). Margaret (payer) on the left, Sarah (family) on the right, PayPal state at the bottom.
