@@ -23,14 +23,15 @@ export function createServices(overrides = {}) {
   const mock = overrides.mock || createMockPayPal({ now: clock.now, publicUrl: config.publicUrl })
   const gateway = overrides.gateway || createGateway({ registry, apiBase: config.paypalApiBase, transport: config.paypalTransport, fetchImpl: overrides.fetchImpl, now: clock.now, publicUrl: config.publicUrl, mock })
   const llm = overrides.llm || selectLlm(config) || localLlm(config)
+  const client = { ip: 'unknown' } // set by the household pool: the visitor's address, for the live model caps
   const withLock = createLocks()
 
   const signalsOf = (payment) => signalsFor({ payment, payee: registry.get(payment.payeeKey), household: store.household() })
-  const investigator = createInvestigator({ store, registry, gateway, llm, clock, wall: overrides.wall, timers, signalsOf })
+  const investigator = createInvestigator({ store, registry, gateway, llm, clock, wall: overrides.wall, timers, signalsOf, clientOf: () => client.ip })
   const lifecycle = createLifecycle({ store, registry, gateway, clock, timers, withLock, investigator, publicUrl: config.publicUrl })
   const decisions = createDecisions({ store, clock, timers, withLock, lifecycle, investigator })
   const scheduler = createScheduler({ store, clock, decisions, lifecycle })
   const webhooks = createWebhookHandler({ store, registry, gateway, clock, lifecycle })
 
-  return { config, clock, timers, store, registry, mock: gateway.mock || mock, gateway, llm, investigator, lifecycle, decisions, scheduler, webhooks }
+  return { client, config, clock, timers, store, registry, mock: gateway.mock || mock, gateway, llm, investigator, lifecycle, decisions, scheduler, webhooks }
 }

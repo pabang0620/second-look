@@ -52,7 +52,7 @@ function limitReport(findings, signals) {
   }
 }
 
-export function createInvestigator({ store, registry, gateway, llm, clock, wall = { now: () => Date.now() }, timers, signalsOf }) {
+export function createInvestigator({ store, registry, gateway, llm, clock, wall = { now: () => Date.now() }, timers, signalsOf, clientOf = () => 'unknown' }) {
   const inflight = new Map()
 
   function track(id, promise) {
@@ -85,6 +85,7 @@ export function createInvestigator({ store, registry, gateway, llm, clock, wall 
       execute: (name, input) => executeTool(name, input, ctx),
       pendingResults,
       replayKey: replayKeyOf(ctx.subject, ctx.payee.key, ctx.payee.credentials.mode),
+      run: { id, ip: clientOf() },
     })
     store.update(id, (p) => ({ modelSources: { ...(p.modelSources || {}), [segment]: outcome.sources } }))
     const used = { ...(payment.agent?.used || {}), record_finding: outcome.budget.record_finding, raise_risk: outcome.budget.raise_risk, ask_elder: outcome.budget.ask_elder, write_report: outcome.budget.write_report }
@@ -162,6 +163,7 @@ export function createInvestigator({ store, registry, gateway, llm, clock, wall 
         llm, system: REQUEST_PROMPT, tools: claudeTools({ requestMode: true }), messages, segment: 1, used: {},
         deadline: wall.now() + timers.segment1Ms, now: wall.now, execute: (name, input) => executeTool(name, input, ctx), pendingResults: [],
         replayKey: replayKeyOf(ctx.subject),
+        run: { id: record.id, ip: clientOf() },
       })
       record = { ...record, modelSources: { 1: outcome.sources } }
       if (!record.report) {

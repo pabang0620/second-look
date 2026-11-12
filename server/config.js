@@ -52,6 +52,7 @@ export function loadConfig(env = process.env) {
     anthropicKey: noOutside || replayOnly ? '' : env.ANTHROPIC_API_KEY || '',
     llmBackend: forceMock ? 'mock' : localOnly ? 'local' : replayOnly ? 'replay' : env.LLM_BACKEND === 'account' ? 'account' : env.LLM_BACKEND === 'scripted' ? 'scripted' : 'api',
     anthropicModel: env.ANTHROPIC_MODEL || 'claude-sonnet-5-5',
+    liveLimits: { perIpHour: num(env.LLM_LIVE_PER_IP_HOUR, 10), perDay: num(env.LLM_LIVE_PER_DAY, 150) },
     timers: buildTimers(env),
     paypalApiBase: env.PAYPAL_API_BASE || 'https://api-m.sandbox.paypal.com',
     paypalTransport: env.PAYPAL_TRANSPORT === 'rest' ? 'rest' : 'sdk',

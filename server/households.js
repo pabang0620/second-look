@@ -29,12 +29,16 @@ export function createHouseholdPool({ build, ttlMs = 3 * 3600 * 1000, max = 200,
 
   return {
     // The session a visitor already has, or a fresh household.
-    open(sessionId) {
+    open(sessionId, meta = {}) {
       const existing = isSessionId(sessionId) ? sessions.get(sessionId) : null
-      if (existing) return { id: sessionId, svc: touch(existing) }
+      if (existing) {
+        if (meta.ip) existing.svc.client.ip = meta.ip
+        return { id: sessionId, svc: touch(existing) }
+      }
       sweep()
       const id = randomBytes(12).toString('hex')
       const built = build()
+      if (meta.ip && built.svc.client) built.svc.client.ip = meta.ip
       sessions.set(id, { svc: built.svc, dispose: built.dispose, lastSeen: now() })
       return { id, svc: built.svc }
     },

@@ -3,13 +3,15 @@ import { createAccountLlm } from './accountLlm.js'
 import { createMockLlm } from './mockLlm.js'
 import { createReplayLlm } from './replayLlm.js'
 import { loadRecordedRuns } from './recordedRuns.js'
+import { createLiveGuard } from './liveGuard.js'
 
 // Which model runs. Returns undefined for the scripted stand-in. FORCE_MOCK=1 always wins.
 // LLM_BACKEND=account uses the local Claude Code login; it never reads ANTHROPIC_API_KEY.
 export function selectLlm(config) {
   if (config.forceMock) return undefined
-  if (config.llmBackend === 'account') return createAccountLlm({ model: config.anthropicModel })
-  if (config.anthropicKey) return createAnthropicLlm({ apiKey: config.anthropicKey, model: config.anthropicModel })
+  const guard = (live) => createLiveGuard({ live, fallback: localLlm(config), perIpHour: config.liveLimits.perIpHour, perDay: config.liveLimits.perDay })
+  if (config.llmBackend === 'account') return guard(createAccountLlm({ model: config.anthropicModel }))
+  if (config.anthropicKey) return guard(createAnthropicLlm({ apiKey: config.anthropicKey, model: config.anthropicModel }))
   return undefined
 }
 

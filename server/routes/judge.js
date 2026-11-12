@@ -23,7 +23,7 @@ export function judgeRoutes(pool) {
   }
 
   router.get('/bootstrap', (req, res) => {
-    const { id, svc } = pool.open(req.get('x-session'))
+    const { id, svc } = pool.open(req.get('x-session'), { ip: req.ip })
     res.json({
       success: true,
       data: {

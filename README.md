@@ -157,6 +157,8 @@ This repository is not meant to become a product by itself: it holds seller cred
 |---|---|---|
 | `PORT`, `PUBLIC_URL` | server port and the public URL used for PayPal return links and webhooks | 3001, `http://localhost:3001` |
 | `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` | live Claude through the hosted API; empty means recorded runs plus the scripted stand-in | empty, `claude-sonnet-5-5` |
+| `LLM_LIVE_PER_IP_HOUR`, `LLM_LIVE_PER_DAY` | caps for the live model: model runs per visitor address per hour, and per host per day (one run = one investigation or one pasted request check, not one tool turn). A reached cap or a failed live call (network, 4xx/5xx, timeout, no credit) never shows an error: the investigation finishes on the recorded run where one matches, otherwise the rule-based stand-in, and the screen says which and why (for example "live limit reached"). A held payment is never captured because the model failed | 10, 150 |
+| `TRUST_PROXY` | reverse proxy hops in front of the server, used to read the visitor address for the hourly cap (0 = none) | 1 |
 | `DEMO_TIMERS` | 1 = short waits (2 min void, 30 s undo, 3 min question), 0 = real (70 h, 15 min, 2 h) | 1 |
 | `AUTO_VOID_MS`, `UNDO_MS`, `ASK_TIMEOUT_MS` | demo timer overrides | see above |
 | `PAYEE_<SELLER>_CLIENT_ID`, `_CLIENT_SECRET`, `_WEBHOOK_ID` | one sandbox app per seller (`POWER_COMPANY`, `GARDEN_SHOP`, `MOBILITY_DIRECT`, `MAPLE_LANE`, `LAKESIDE_TICKETS`) | empty, local stand-in |

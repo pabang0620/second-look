@@ -27,6 +27,8 @@ export function createApp(source) {
   const pool = typeof source.open === 'function' ? source : singleHousehold(source)
   const app = express()
   app.disable('x-powered-by')
+  // Behind nginx the visitor address comes from X-Forwarded-For. TRUST_PROXY = number of proxy hops (0 = none).
+  app.set('trust proxy', Number(process.env.TRUST_PROXY ?? 1) || false)
   app.use(express.json({ limit: '100kb' }))
   app.use(express.urlencoded({ extended: false, limit: '10kb' }))
 

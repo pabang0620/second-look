@@ -24,7 +24,7 @@ const errorResult = (use, message) => ({ type: 'tool_result', tool_use_id: use.i
 
 // One investigation segment. Segment 1 ends at ask_elder, write_report, a time limit or the hard call cap.
 // Segment 2 starts after the answer. The model is never running while we wait for a person.
-export async function runSegment({ llm, system, tools, messages, segment, used, deadline, now, execute, pendingResults = [], replayKey }) {
+export async function runSegment({ llm, system, tools, messages, segment, used, deadline, now, execute, pendingResults = [], replayKey, run }) {
   const budget = createBudget({ segment, used })
   const results = [...pendingResults]
   const sources = new Set() // which model answered each turn, for the label the family sees
@@ -34,7 +34,7 @@ export async function runSegment({ llm, system, tools, messages, segment, used, 
     if (budget.snapshot().total >= LIMITS.hardCap) return end({ outcome: 'hard_cap' })
     let response
     try {
-      response = await callModel(llm, { system, tools, messages, deadline, now, replayKey })
+      response = await callModel(llm, { system, tools, messages, deadline, now, replayKey, run })
     } catch (err) {
       if (isDeadlineError(err, { deadline, now })) return end({ outcome: 'timeout' })
       return end({ outcome: 'llm_error', error: String(err.message || err) })
