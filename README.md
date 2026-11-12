@@ -2,7 +2,9 @@
 
 # Second Look
 
-**Try it:** https://second-look.35-216-2-121.sslip.io (hosted demo: local mode, recorded Claude Sonnet runs, demo timers; no login).
+**Demo video:** https://youtu.be/1MYANH17GtQ | **Hosted demo:** https://second-look.35-216-2-121.sslip.io | **Devpost:** https://devpost.com/software/second-look-0ur1yl
+
+**Try it:** https://second-look.35-216-2-121.sslip.io (hosted demo: live Claude Sonnet (`claude-sonnet-5-5`) with per-visitor-hour and per-day caps, PayPal on the local stand-in, demo timers; no login). When the Claude API fails or a cap is hit, the card says so and the investigation continues on a labelled recorded run or the rule-based stand-in.
 
 > The FTC's advice is "Stop and talk to someone you trust." Second Look builds that step into the payment: a payment to a first-time or risky seller stays an uncaptured PayPal authorization while Claude investigates it and shows its work, and a trusted family member taps Approve (capture) or Stop (void). The money never moves to a holding account; it simply is not captured until someone says yes.
 
@@ -61,7 +63,7 @@ Scenario 4 took the same first three turns as scenario 2 and then recorded `amou
 ## What the AI does and does not do
 
 - **What you see in local mode is a recording of the real model.** Claude Sonnet (`claude-sonnet-5-5`, through a local Claude Code login, no API key) was run once on scenarios 1, 2, 4 and 5 on 2026-11-12, and scenario 1 once more after each answer button and after "No answer" (`npm run record:runs`). The tool calls in order, their results and the timings are in `server/agent/recorded-runs/`. In local mode the app replays a recorded turn only while every earlier tool result is the same as in the recording; anything else (another answer, a typed request, a second payment to the same seller) continues with the scripted stand-in. Every card says which: "Investigation: Recorded run: Claude Sonnet, 2026-11-12", or "Scripted stand-in", or both with the point where it changed.
-- Live model: `LLM_BACKEND=account` (your Claude Code login) or `ANTHROPIC_API_KEY` (hosted API; not yet run against the real API, VERIFY.md V6). The PayPal Agent Toolkit `get_order` is used only for sellers with sandbox credentials (it read real sandbox orders, VERIFY T1); the local stand-in answers `get_order` otherwise.
+- Live model: `LLM_BACKEND=account` (your Claude Code login) or `ANTHROPIC_API_KEY` (hosted API; this is what the hosted demo runs, with the caps below). The PayPal Agent Toolkit `get_order` is used only for sellers with sandbox credentials (it read real sandbox orders, VERIFY T1); the local stand-in answers `get_order` otherwise.
 - Claude **investigates and explains** with ten tools. There is no capture, void or release tool.
 - Investigation tools are capped (6 before the question, 2 after the answer). Recording tools (`record_finding`, `raise_risk`) have their own caps, so a risky payment still reaches its question. There is also a hard cap of 16 calls per segment, and after 13 calls (from the 14th call on) only `ask_elder` or `write_report` is allowed.
 - The payer's answer is shown to the family but never lowers the risk (scammers coach victims).
@@ -86,7 +88,7 @@ Development: `npm run dev:server` and `npm run dev:client` (Vite on 5173 proxies
 
 | Mode | Command | PayPal | Model |
 |---|---|---|---|
-| Local (default) | `npm start` | Local stand-in with real response shapes; no outside calls | Recorded Claude Sonnet runs, then the scripted stand-in |
+| Local (default) | `npm start` | Local stand-in with real response shapes; no outside calls (with no API key) | Recorded Claude Sonnet runs, then the scripted stand-in |
 | Video recording | `npm run demo:video` | Local stand-in (keys in `.env` ignored); 75 s auto void, 10 s undo | Recorded runs |
 | Sandbox demo | `npm run build && npm run start:sandbox` | PayPal sandbox for sellers that have keys in `.env` (payer approves in the PayPal window); the others stay on the stand-in. `SANDBOX_SELLERS=mobility_direct` limits it to scenario 1's seller | Recorded runs only (no API key or login is read) |
 | Live model | `LLM_BACKEND=account npm start` | Local stand-in, or sandbox sellers if keys are set | Real Claude Sonnet through your Claude Code login, no API key |
