@@ -1,0 +1,35 @@
+{
+  "name": "second-look",
+  "version": "1.0.0",
+  "description": "Second Look: a family check on risky payments, held as an uncaptured PayPal authorization while Claude investigates.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "vite build",
+    "start": "node server/index.js",
+    "dev:server": "node --watch server/index.js",
+    "dev:client": "vite",
+    "test": "FORCE_MOCK=1 node --test test/*.test.js",
+    "sdk:smoke": "node scripts/sdkSmoke.js",
+    "demo:video": "AUTO_VOID_MS=75000 UNDO_MS=10000 node server/index.js",
+    "v6:account": "node scripts/v6Account.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.322",
+    "@anthropic-ai/sdk": "^1.6.0",
+    "@paypal/agent-toolkit": "^1.11.0",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "paypal": "github:context-plugins/paypal-typescript-sdk#main",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.2.1",
+    "vite": "^8.3.6"
+  }
+}
